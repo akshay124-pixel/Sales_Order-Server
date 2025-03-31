@@ -11,7 +11,7 @@ const app = express();
 const port = 5000; // Or 5000, depending on your setup
 
 const corsOptions = {
-  origin: "http://localhost:3000",
+  origin: "https://sales-order-app-eight.vercel.app",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   optionsSuccessStatus: 200,
