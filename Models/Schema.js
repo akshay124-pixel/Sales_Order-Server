@@ -47,9 +47,7 @@ const orderSchema = new mongoose.Schema(
     total: { type: Number },
     paymentTerms: { type: String, default: null },
     amount2: { type: Number, default: null },
-    freight: { type: Number, default: 0 },
-    freightmode: { type: String, default: "To Pay" },
-    freightmodes: { type: String, default: "Others" },
+    freightcs: { type: String, default: null },
     installation: { type: String, default: "N/A" },
     salesPerson: { type: String, default: null },
     company: {

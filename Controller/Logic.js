@@ -102,9 +102,7 @@ const editEntry = async (req, res) => {
       total,
       paymentTerms,
       amount2,
-      freight,
-      freightmode,
-      freightmodes,
+      freightcs,
       installation,
       salesPerson,
       company,
@@ -184,15 +182,10 @@ const editEntry = async (req, res) => {
       ...(amount2 !== undefined && {
         amount2: amount2 !== "" ? Number(amount2) : null,
       }),
-      ...(freight !== undefined && {
-        freight: freight !== "" ? Number(freight) : 0,
+      ...(freightcs !== undefined && {
+        freightcs: freightcs?.trim() || "",
       }),
-      ...(freightmode !== undefined && {
-        freightmode: freightmode?.trim() || "",
-      }),
-      ...(freightmodes !== undefined && {
-        freightmodes: freightmodes?.trim() || "",
-      }),
+
       ...(installation !== undefined && {
         installation: installation?.trim() || "",
       }),
@@ -353,9 +346,9 @@ const exportentry = async (req, res) => {
       total: entry.total || 0,
       paymentTerms: entry.paymentTerms || "Not Found",
       amount2: entry.amount2 || 0,
-      freight: entry.freight || 0,
-      freightmode: entry.freightmode || "Not Found",
-      freightmodes: entry.freightmodes || "Not Found",
+
+      freightcs: entry.freightcs || "Not Found",
+
       installation: entry.installation || "Not Found",
       salesPerson: entry.salesPerson || "Not Found",
       company: entry.company || "Not Found",
@@ -460,9 +453,7 @@ const bulkUploadOrders = async (req, res) => {
       total: entry.total !== undefined ? Number(entry.total) : null,
       paymentTerms: String(entry.paymentTerms || "").trim() || null,
       amount2: entry.amount2 !== undefined ? Number(entry.amount2) : null,
-      freight: entry.freight !== undefined ? Number(entry.freight) : 0,
-      freightmode: String(entry.freightmode || "To Pay").trim(),
-      freightmodes: String(entry.frieghtmodes || "Others").trim(),
+      freightcs: String(entry.freightcs || "").trim() || null,
       installation: String(entry.installation || "N/A").trim(),
       salesPerson: String(entry.salesPerson || "").trim() || null,
       shippingAddress: String(entry.shippingAddress || "").trim() || null,
