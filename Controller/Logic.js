@@ -506,12 +506,13 @@ const bulkUploadOrders = async (req, res) => {
   }
 };
 // Get production orders
+
 const getProductionOrders = async (req, res) => {
   try {
-    // Fetch orders where sostatus is "Approved" and completionStatus is not "Complete"
     const orders = await Order.find({
       sostatus: "Approved",
-      completionStatus: { $ne: "Complete" }, // $ne means "not equal"
+      completionStatus: { $ne: "Complete" },
+      fulfillingStatus: { $ne: "Partial Dispatch" }, // Exclude Partial Dispatch
     }).lean();
 
     res.status(200).json({ success: true, data: orders });
@@ -526,9 +527,15 @@ const getProductionOrders = async (req, res) => {
 };
 
 // Get finished goods orders
+
 const getFinishedGoodsOrders = async (req, res) => {
   try {
-    const orders = await Order.find({ completionStatus: "Complete" }).lean();
+    const orders = await Order.find({
+      $or: [
+        { completionStatus: "Complete" },
+        { fulfillingStatus: "Partial Dispatch" },
+      ],
+    }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
     console.error("Error in getFinishedGoodsOrders:", error.message);
@@ -539,6 +546,7 @@ const getFinishedGoodsOrders = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   getAllOrders,
   createOrder,
