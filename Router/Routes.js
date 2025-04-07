@@ -4,10 +4,11 @@ const Controller = require("../Controller/Logic"); // Adjust path
 const checkProductionRole = require("../Middleware/middleware");
 // GET all orders
 router.get("/get-orders", Controller.getAllOrders);
-
+router.get("/installation-orders", Controller.getInstallationOrders);
+router.get("/accounts-orders", Controller.getAccountsOrders);
 // POST a new order
 router.post("/orders", Controller.createOrder);
-router.get("/installation-orders", Controller.getInstallationOrders);
+
 // DELETE an order by ID
 router.delete("/delete/:id", Controller.DeleteData); // Updated to use :id parameter
 

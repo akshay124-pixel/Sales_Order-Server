@@ -84,6 +84,13 @@ const orderSchema = new mongoose.Schema(
 
     fulfillingStatus: { type: String, default: "Pending" },
     remarksByProduction: { type: String, default: null },
+    remarksByAccounts: { type: String, default: null },
+    paymentReceived: {
+      type: String,
+      enum: ["Not Received", "Received"],
+      default: "Not Received",
+    },
+    billNumber: { type: String, default: "" },
     completionStatus: {
       type: String,
       enum: ["In Progress", "Complete"],

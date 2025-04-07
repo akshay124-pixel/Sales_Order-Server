@@ -575,6 +575,7 @@ const getInstallationOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       dispatchStatus: "Dispatched",
+      installationStatus: { $ne: "Completed" }, // Exclude completed installations
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
@@ -586,8 +587,26 @@ const getInstallationOrders = async (req, res) => {
     });
   }
 };
+
+const getAccountsOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({
+      installationStatus: "Completed",
+      paymentReceived: { $ne: "Received" },
+    }).lean();
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error("Error in getAccountsOrders:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching accounts orders",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   getInstallationOrders,
+  getAccountsOrders,
   getAllOrders,
   createOrder,
   DeleteData,
