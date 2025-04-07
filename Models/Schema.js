@@ -49,6 +49,17 @@ const orderSchema = new mongoose.Schema(
     amount2: { type: Number, default: null },
     freightcs: { type: String, default: null },
     installation: { type: String, default: "N/A" },
+    installationStatus: {
+      type: String,
+      enum: ["Pending", "In Progress", "Completed", "Failed"],
+      default: "Pending",
+    },
+    remarksByInstallation: { type: String, default: "" },
+    dispatchStatus: {
+      type: String,
+      enum: ["Not Dispatched", "Dispatched", "Delivered"],
+      default: "Not Dispatched",
+    },
     salesPerson: { type: String, default: null },
     company: {
       type: String,

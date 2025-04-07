@@ -7,7 +7,7 @@ router.get("/get-orders", Controller.getAllOrders);
 
 // POST a new order
 router.post("/orders", Controller.createOrder);
-
+router.get("/installation-orders", Controller.getInstallationOrders);
 // DELETE an order by ID
 router.delete("/delete/:id", Controller.DeleteData); // Updated to use :id parameter
 

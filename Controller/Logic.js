@@ -535,6 +535,7 @@ const getFinishedGoodsOrders = async (req, res) => {
         { completionStatus: "Complete" },
         { fulfillingStatus: "Partial Dispatch" },
       ],
+      dispatchStatus: { $ne: "Dispatched" }, // Exclude Dispatched orders
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
@@ -546,8 +547,23 @@ const getFinishedGoodsOrders = async (req, res) => {
     });
   }
 };
-
+const getInstallationOrders = async (req, res) => {
+  try {
+    const orders = await Order.find({
+      dispatchStatus: "Dispatched",
+    }).lean();
+    res.status(200).json({ success: true, data: orders });
+  } catch (error) {
+    console.error("Error in getInstallationOrders:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching installation orders",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
+  getInstallationOrders,
   getAllOrders,
   createOrder,
   DeleteData,
