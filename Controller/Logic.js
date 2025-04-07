@@ -121,6 +121,9 @@ const editEntry = async (req, res) => {
       shippingAddress,
       billingAddress,
       remarksByProduction,
+      remarksByAccounts,
+      paymentReceived,
+      billNumber,
     } = req.body;
 
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
@@ -240,6 +243,15 @@ const editEntry = async (req, res) => {
       }),
       ...(remarksByProduction !== undefined && {
         remarksByProduction: remarksByProduction?.trim() || "",
+      }),
+      ...(remarksByAccounts !== undefined && {
+        remarksByAccounts: remarksByAccounts?.trim() || "",
+      }),
+      ...(paymentReceived !== undefined && {
+        paymentRecived: paymentReceived?.trim() || "",
+      }),
+      ...(billNumber !== undefined && {
+        billNumber: billNumber?.trim() || "",
       }),
     };
 
@@ -361,13 +373,12 @@ const exportentry = async (req, res) => {
       gst: entry.gst || 0,
       total: entry.total || 0,
       paymentTerms: entry.paymentTerms || "Not Found",
+      paymentReceived: entry.paymentReceived || "Not Received", // Updated default per schema
       amount2: entry.amount2 || 0,
-
       freightcs: entry.freightcs || "Not Found",
-
       installation: entry.installation || "Not Found",
       installationStatus: entry.installationStatus || "Not Found",
-      remarksByInstallation: entry.installationStatus || "Not Found",
+      remarksByInstallation: entry.remarksByInstallation || "Not Found",
       dispatchStatus: entry.dispatchStatus || "Not Found",
       salesPerson: entry.salesPerson || "Not Found",
       company: entry.company || "Not Found",
@@ -381,10 +392,19 @@ const exportentry = async (req, res) => {
         : "Not Found",
       sostatus: entry.sostatus || "Not Found",
       invoiceNo: entry.invoiceNo || 0,
-      invoiceDate: entry.invoiceDate || "Not Found",
+      invoiceDate: entry.invoiceDate
+        ? entry.invoiceDate.toLocaleDateString()
+        : "Not Found",
       remarks: entry.remarks || "Not Found",
       fulfillingStatus: entry.fulfillingStatus || "Not Found",
       remarksByProduction: entry.remarksByProduction || "Not Found",
+      // New fields from updated schema
+      billNumber: entry.billNumber || "Not Found",
+      completionStatus: entry.completionStatus || "Not Found",
+      fulfillmentDate: entry.fulfillmentDate
+        ? entry.fulfillmentDate.toLocaleDateString()
+        : "Not Found",
+      remarksByAccounts: entry.remarksByAccounts || "Not Found",
     }));
 
     const ws = XLSX.utils.json_to_sheet(formattedEntries);
@@ -409,7 +429,7 @@ const exportentry = async (req, res) => {
   }
 };
 
-// bulk Upload
+// Bulk Upload
 const bulkUploadOrders = async (req, res) => {
   try {
     const newEntries = req.body;
@@ -474,11 +494,9 @@ const bulkUploadOrders = async (req, res) => {
       amount2: entry.amount2 !== undefined ? Number(entry.amount2) : null,
       freightcs: String(entry.freightcs || "").trim() || null,
       installation: String(entry.installation || "N/A").trim(),
-      installationStatus: String(entry.installationStatus || "N/A").trim(),
-      remarksByInstallation: String(
-        entry.remarksByInstallation || "N/A"
-      ).trim(),
-      dispatchStatus: String(entry.dispatchStatus || "N/A").trim(),
+      installationStatus: String(entry.installationStatus || "Pending").trim(),
+      remarksByInstallation: String(entry.remarksByInstallation || "").trim(),
+      dispatchStatus: String(entry.dispatchStatus || "Not Dispatched").trim(),
       salesPerson: String(entry.salesPerson || "").trim() || null,
       shippingAddress: String(entry.shippingAddress || "").trim() || null,
       billingAddress: String(entry.billingAddress || "").trim() || null,
@@ -506,6 +524,18 @@ const bulkUploadOrders = async (req, res) => {
       fulfillingStatus: String(entry.fulfillingStatus || "Pending").trim(),
       remarksByProduction:
         String(entry.remarksByProduction || "").trim() || null,
+      // New fields from updated schema
+      billNumber: String(entry.billNumber || "").trim() || null,
+      completionStatus: String(entry.completionStatus || "In Progress").trim(),
+      fulfillmentDate: entry.fulfillmentDate
+        ? moment(entry.fulfillmentDate, [
+            "YYYY-MM-DD",
+            "DD/MM/YYYY",
+            "MM/DD/YYYY",
+          ]).toDate()
+        : null,
+      remarksByAccounts: String(entry.remarksByAccounts || "").trim() || null,
+      paymentReceived: String(entry.paymentReceived || "Not Received").trim(),
     }));
 
     const insertedOrders = await Order.insertMany(validatedEntries, {
