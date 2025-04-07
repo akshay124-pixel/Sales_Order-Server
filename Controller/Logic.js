@@ -104,6 +104,9 @@ const editEntry = async (req, res) => {
       amount2,
       freightcs,
       installation,
+      installationStatus,
+      remarksByInstallation,
+      dispatchStatus,
       salesPerson,
       company,
       transporter,
@@ -189,6 +192,19 @@ const editEntry = async (req, res) => {
       ...(installation !== undefined && {
         installation: installation?.trim() || "",
       }),
+
+      ...(installationStatus !== undefined && {
+        installationStatus: installationStatus?.trim() || "",
+      }),
+
+      ...(remarksByInstallation !== undefined && {
+        remarksByInstallation: remarksByInstallation?.trim() || "",
+      }),
+
+      ...(dispatchStatus !== undefined && {
+        dispatchStatus: dispatchStatus?.trim() || "",
+      }),
+
       ...(salesPerson !== undefined && {
         salesPerson: salesPerson?.trim() || "",
       }),
@@ -350,6 +366,9 @@ const exportentry = async (req, res) => {
       freightcs: entry.freightcs || "Not Found",
 
       installation: entry.installation || "Not Found",
+      installationStatus: entry.installationStatus || "Not Found",
+      remarksByInstallation: entry.installationStatus || "Not Found",
+      dispatchStatus: entry.dispatchStatus || "Not Found",
       salesPerson: entry.salesPerson || "Not Found",
       company: entry.company || "Not Found",
       transporter: entry.transporter || "Not Found",
@@ -455,6 +474,11 @@ const bulkUploadOrders = async (req, res) => {
       amount2: entry.amount2 !== undefined ? Number(entry.amount2) : null,
       freightcs: String(entry.freightcs || "").trim() || null,
       installation: String(entry.installation || "N/A").trim(),
+      installationStatus: String(entry.installationStatus || "N/A").trim(),
+      remarksByInstallation: String(
+        entry.remarksByInstallation || "N/A"
+      ).trim(),
+      dispatchStatus: String(entry.dispatchStatus || "N/A").trim(),
       salesPerson: String(entry.salesPerson || "").trim() || null,
       shippingAddress: String(entry.shippingAddress || "").trim() || null,
       billingAddress: String(entry.billingAddress || "").trim() || null,
