@@ -248,7 +248,7 @@ const editEntry = async (req, res) => {
         remarksByAccounts: remarksByAccounts?.trim() || "",
       }),
       ...(paymentReceived !== undefined && {
-        paymentRecived: paymentReceived?.trim() || "",
+        paymentReceived: paymentReceived?.trim() || "",
       }),
       ...(billNumber !== undefined && {
         billNumber: billNumber?.trim() || "",
