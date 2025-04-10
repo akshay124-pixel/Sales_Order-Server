@@ -8,11 +8,22 @@ const counterSchema = new mongoose.Schema({
 
 const Counter = mongoose.model("Counter", counterSchema);
 
+// Sub-schema for products
+const productSchema = new mongoose.Schema({
+  productType: { type: String, required: true },
+  size: { type: String, default: "N/A" },
+  spec: { type: String, default: "N/A" },
+  qty: { type: Number, required: true },
+  unitPrice: { type: Number, required: true },
+  serialNos: [{ type: String, default: null }], // Array of serial numbers
+  modelNos: [{ type: String, default: null }], // Array of model numbers
+});
+
 // Main Order Schema
 const orderSchema = new mongoose.Schema(
   {
     orderId: { type: String, unique: true },
-    soDate: { type: Date },
+    soDate: { type: Date, required: true },
     committedDate: { type: Date, default: null },
     dispatchFrom: { type: String, default: null },
     status: {
@@ -28,25 +39,19 @@ const orderSchema = new mongoose.Schema(
       default: "Pending",
     },
     dispatchDate: { type: Date, default: null },
-    serialno: { type: String, default: null },
     name: { type: String, default: null },
     partyAndAddress: { type: String, default: null },
     city: { type: String, default: null },
     state: { type: String, default: null },
     pinCode: { type: String, default: null },
     contactNo: { type: String, default: null },
+    customername: { type: String, default: null },
     customerEmail: { type: String, default: null },
-    modelNo: { type: String, default: null },
-    productType: { type: String, default: null },
-    size: { type: String, default: null },
-    spec: { type: String, default: null },
-    productDetails: { type: String, default: null },
-    qty: { type: Number },
-    unitPrice: { type: Number, default: null },
-    gst: { type: Number, default: null },
-    total: { type: Number },
+    products: [productSchema],
+    gst: { type: Number, default: 0 },
+    total: { type: Number, required: true },
     paymentTerms: { type: String, default: null },
-    amount2: { type: Number, default: null },
+    amount2: { type: Number, default: 0 },
     freightcs: { type: String, default: null },
     installation: { type: String, default: "N/A" },
     installationStatus: {
@@ -57,14 +62,19 @@ const orderSchema = new mongoose.Schema(
     remarksByInstallation: { type: String, default: "" },
     dispatchStatus: {
       type: String,
-      enum: ["Not Dispatched", "Dispatched", "Delivered"],
+      enum: [
+        "Not Dispatched",
+        "Dispatched",
+        "Delivered",
+        "Docket Awaited Dispatched",
+      ],
       default: "Not Dispatched",
     },
     salesPerson: { type: String, default: null },
     company: {
       type: String,
-      enum: ["ProMark", "ProMine", "Others"],
-      default: "ProMark",
+      enum: ["Promark", "Promine", "Others"],
+      default: "Promark",
     },
     transporter: { type: String, default: null },
     transporterDetails: { type: String, default: null },
@@ -81,7 +91,6 @@ const orderSchema = new mongoose.Schema(
     sameAddress: { type: Boolean, default: false },
     invoiceNo: { type: Number, sparse: true, default: null },
     invoiceDate: { type: Date, default: null },
-
     fulfillingStatus: { type: String, default: "Pending" },
     remarksByProduction: { type: String, default: null },
     remarksByAccounts: { type: String, default: null },
@@ -103,7 +112,7 @@ const orderSchema = new mongoose.Schema(
 
 // Pre-save hook to generate orderId
 orderSchema.pre("save", async function (next) {
-  if (this.isNew && (this.orderId === null || this.orderId === undefined)) {
+  if (this.isNew && !this.orderId) {
     try {
       const counter = await Counter.findByIdAndUpdate(
         { _id: "orderId" },
@@ -122,5 +131,4 @@ orderSchema.pre("save", async function (next) {
 
 const Order = mongoose.model("Order", orderSchema);
 
-// Export both models
 module.exports = { Order, Counter };

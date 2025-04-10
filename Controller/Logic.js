@@ -16,45 +16,106 @@ const getAllOrders = async (req, res) => {
 // Create a new order
 const createOrder = async (req, res) => {
   try {
-    console.log("Request body received in createOrder:", req.body);
+    const {
+      soDate,
+      committedDate,
+      status,
+      name,
+      partyAndAddress,
+      city,
+      state,
+      pinCode,
+      contactNo,
+      customerEmail,
+      customername,
+      products,
+      gst,
+      paymentTerms,
+      amount2,
+      freightcs,
+      installation,
+      salesPerson,
+      company,
+      shippingAddress,
+      billingAddress,
+      sameAddress,
+      total,
+    } = req.body;
 
-    // Manual validation for required fields
-    const { soDate, qty, unitPrice, total } = req.body;
     if (
       !soDate ||
-      qty === undefined ||
-      unitPrice === undefined ||
-      total === undefined
+      !products ||
+      !Array.isArray(products) ||
+      products.length === 0
     ) {
       return res.status(400).json({
         error: "Missing required fields",
-        details: "soDate, qty, unitPrice, and total are required",
+        details: "soDate and at least one product are required",
       });
     }
 
-    // Validate numeric fields
-    const numericFields = { qty, unitPrice, total };
-    for (const [key, value] of Object.entries(numericFields)) {
-      if (isNaN(Number(value)) || value === "") {
+    for (const product of products) {
+      if (!product.productType || !product.qty || !product.unitPrice) {
         return res.status(400).json({
-          error: `Invalid ${key}`,
-          details: `${key} must be a valid number`,
+          error: "Invalid product data",
+          details: "Each product must have productType, qty, and unitPrice",
         });
       }
+      if (isNaN(Number(product.qty)) || isNaN(Number(product.unitPrice))) {
+        return res.status(400).json({
+          error: "Invalid product data",
+          details: "qty and unitPrice must be valid numbers",
+        });
+      }
+      // Ensure serialNos and modelNos are arrays
+      product.serialNos = Array.isArray(product.serialNos)
+        ? product.serialNos
+        : [];
+      product.modelNos = Array.isArray(product.modelNos)
+        ? product.modelNos
+        : [];
     }
 
-    // Validate date
-    if (isNaN(new Date(soDate).getTime())) {
-      return res.status(400).json({
-        error: "Invalid soDate",
-        details: "soDate must be a valid date",
-      });
-    }
+    const calculatedTotal =
+      products.reduce(
+        (sum, product) =>
+          sum +
+          Number(product.qty) * Number(product.unitPrice) +
+          (Number(gst || 0) / 100) * Number(product.unitPrice),
+        0
+      ) +
+      Number(amount2 || 0) +
+      Number(freightcs || 0);
 
-    const order = new Order(req.body);
+    const order = new Order({
+      soDate: new Date(soDate),
+      committedDate: committedDate ? new Date(committedDate) : null,
+      status,
+      name,
+      partyAndAddress,
+      city,
+      state,
+      pinCode,
+      contactNo,
+      customerEmail,
+      customername,
+      products,
+      gst: Number(gst || 0),
+      paymentTerms,
+      amount2: Number(amount2 || 0),
+      freightcs,
+      installation,
+      salesPerson,
+      company,
+      shippingAddress,
+      billingAddress,
+      sameAddress,
+      total:
+        total !== undefined && !isNaN(total) ? Number(total) : calculatedTotal,
+    });
+
     await order.validate();
     const savedOrder = await order.save();
-    console.log("Order saved successfully:", savedOrder);
     res.status(201).json(savedOrder);
   } catch (error) {
     console.error("Validation error in createOrder:", error);
@@ -65,21 +126,14 @@ const createOrder = async (req, res) => {
         details: messages,
       });
     }
-    res.status(400).json({ error: error.message });
+    res.status(500).json({ error: "Server error", details: error.message });
   }
 };
-
-/// Edit an existing order
+// Edit an existing order
 const editEntry = async (req, res) => {
-  console.log("Received PUT /api/edit/:id request:", {
-    params: req.params,
-    body: req.body,
-  });
-
   try {
     const {
       soDate,
-      serialno,
       committedDate,
       dispatchFrom,
       status,
@@ -91,13 +145,8 @@ const editEntry = async (req, res) => {
       name,
       contactNo,
       customerEmail,
-      modelNo,
-      productType,
-      size,
-      spec,
-      productDetails,
-      qty,
-      unitPrice,
+      customername,
+      products,
       gst,
       total,
       paymentTerms,
@@ -141,9 +190,6 @@ const editEntry = async (req, res) => {
 
     const updateData = {
       ...(soDate !== undefined && { soDate: soDate ? new Date(soDate) : null }),
-      ...(serialno !== undefined && {
-        serialno: serialno?.trim() || "",
-      }),
       ...(committedDate !== undefined && {
         committedDate: committedDate ? new Date(committedDate) : null,
       }),
@@ -165,18 +211,15 @@ const editEntry = async (req, res) => {
       ...(customerEmail !== undefined && {
         customerEmail: customerEmail?.trim() || "",
       }),
-      ...(modelNo !== undefined && { modelNo: modelNo?.trim() || "" }),
-      ...(productType !== undefined && {
-        productType: productType?.trim() || "",
+      ...(customername !== undefined && {
+        customername: customername?.trim() || "",
       }),
-      ...(size !== undefined && { size: size?.trim() || "" }),
-      ...(spec !== undefined && { spec: spec?.trim() || "" }),
-      ...(productDetails !== undefined && {
-        productDetails: productDetails?.trim() || "",
-      }),
-      ...(qty !== undefined && { qty: qty !== "" ? Number(qty) : order.qty }),
-      ...(unitPrice !== undefined && {
-        unitPrice: unitPrice !== "" ? Number(unitPrice) : order.unitPrice,
+      ...(products !== undefined && {
+        products: products.map((p) => ({
+          ...p,
+          serialNos: Array.isArray(p.serialNos) ? p.serialNos : [],
+          modelNos: Array.isArray(p.modelNos) ? p.modelNos : [],
+        })),
       }),
       ...(gst !== undefined && { gst: gst !== "" ? Number(gst) : null }),
       ...(total !== undefined && {
@@ -191,23 +234,18 @@ const editEntry = async (req, res) => {
       ...(freightcs !== undefined && {
         freightcs: freightcs?.trim() || "",
       }),
-
       ...(installation !== undefined && {
         installation: installation?.trim() || "",
       }),
-
       ...(installationStatus !== undefined && {
         installationStatus: installationStatus?.trim() || "",
       }),
-
       ...(remarksByInstallation !== undefined && {
         remarksByInstallation: remarksByInstallation?.trim() || "",
       }),
-
       ...(dispatchStatus !== undefined && {
         dispatchStatus: dispatchStatus?.trim() || "",
       }),
-
       ...(salesPerson !== undefined && {
         salesPerson: salesPerson?.trim() || "",
       }),
@@ -255,7 +293,6 @@ const editEntry = async (req, res) => {
       }),
     };
 
-    // Automatic status transition logic
     if (
       fulfillingStatus === "Fulfilled" &&
       order.fulfillingStatus !== "Fulfilled"
@@ -347,7 +384,6 @@ const exportentry = async (req, res) => {
 
     const formattedEntries = orders.map((entry) => ({
       soDate: entry.soDate ? entry.soDate.toLocaleDateString() : "Not Found",
-      serialno: entry.serialno || "Not Found",
       committedDate: entry.committedDate
         ? entry.committedDate.toLocaleDateString()
         : "Not Found",
@@ -363,17 +399,20 @@ const exportentry = async (req, res) => {
       name: entry.name || "Not Found",
       contactNo: entry.contactNo || "Not Found",
       customerEmail: entry.customerEmail || "Not Found",
-      modelNo: entry.modelNo || "Not Found",
-      productType: entry.productType || "Not Found",
-      size: entry.size || "Not Found",
-      spec: entry.spec || "Not Found",
-      productDetails: entry.productDetails || "Not Found",
-      qty: entry.qty || 0,
-      unitPrice: entry.unitPrice || 0,
+      products: entry.products
+        .map(
+          (p) =>
+            `${p.productType} (Qty: ${p.qty}, SerialNos: ${
+              p.serialNos.length > 0 ? p.serialNos.join(", ") : "N/A"
+            }, ModelNos: ${
+              p.modelNos.length > 0 ? p.modelNos.join(", ") : "N/A"
+            })`
+        )
+        .join(", "),
       gst: entry.gst || 0,
       total: entry.total || 0,
       paymentTerms: entry.paymentTerms || "Not Found",
-      paymentReceived: entry.paymentReceived || "Not Received", // Updated default per schema
+      paymentReceived: entry.paymentReceived || "Not Received",
       amount2: entry.amount2 || 0,
       freightcs: entry.freightcs || "Not Found",
       installation: entry.installation || "Not Found",
@@ -398,7 +437,6 @@ const exportentry = async (req, res) => {
       remarks: entry.remarks || "Not Found",
       fulfillingStatus: entry.fulfillingStatus || "Not Found",
       remarksByProduction: entry.remarksByProduction || "Not Found",
-      // New fields from updated schema
       billNumber: entry.billNumber || "Not Found",
       completionStatus: entry.completionStatus || "Not Found",
       fulfillmentDate: entry.fulfillmentDate
@@ -440,7 +478,6 @@ const bulkUploadOrders = async (req, res) => {
       });
     }
 
-    // Reserve sequence numbers for all new entries
     const counter = await Counter.findByIdAndUpdate(
       { _id: "orderId" },
       { $inc: { sequence: newEntries.length } },
@@ -448,95 +485,105 @@ const bulkUploadOrders = async (req, res) => {
     );
     const startSequence = counter.sequence - newEntries.length + 1;
 
-    const validatedEntries = newEntries.map((entry, index) => ({
-      orderId: `PMTO${startSequence + index}`, // Assign unique orderId
-      soDate: entry.soDate
-        ? moment(entry.soDate, [
-            "YYYY-MM-DD",
-            "DD/MM/YYYY",
-            "MM/DD/YYYY",
-          ]).toDate()
-        : null,
-      serialno: String(entry.serialno || "").trim() || null,
-      committedDate: entry.committedDate
-        ? moment(entry.committedDate, [
-            "YYYY-MM-DD",
-            "DD/MM/YYYY",
-            "MM/DD/YYYY",
-          ]).toDate()
-        : null,
-      dispatchFrom: String(entry.dispatchFrom || "").trim() || null,
-      status: String(entry.status || "Pending").trim(),
-      dispatchDate: entry.dispatchDate
-        ? moment(entry.dispatchDate, [
-            "YYYY-MM-DD",
-            "DD/MM/YYYY",
-            "MM/DD/YYYY",
-          ]).toDate()
-        : null,
-      partyAndAddress: String(entry.partyAndAddress || "").trim() || null,
-      city: String(entry.city || "").trim() || null,
-      state: String(entry.state || "").trim() || null,
-      pinCode: String(entry.pinCode || "").trim() || null,
-      name: String(entry.name || "").trim() || null,
-      contactNo: String(entry.contactNo || "").trim() || null,
-      customerEmail: String(entry.customerEmail || "").trim() || null,
-      modelNo: String(entry.modelNo || "").trim() || null,
-      productType: String(entry.productType || "").trim() || null,
-      size: String(entry.size || "").trim() || null,
-      spec: String(entry.spec || "").trim() || null,
-      productDetails: String(entry.productDetails || "").trim() || null,
-      qty: entry.qty !== undefined ? Number(entry.qty) : null,
-      unitPrice: entry.unitPrice !== undefined ? Number(entry.unitPrice) : null,
-      gst: entry.gst !== undefined ? Number(entry.gst) : null,
-      total: entry.total !== undefined ? Number(entry.total) : null,
-      paymentTerms: String(entry.paymentTerms || "").trim() || null,
-      amount2: entry.amount2 !== undefined ? Number(entry.amount2) : null,
-      freightcs: String(entry.freightcs || "").trim() || null,
-      installation: String(entry.installation || "N/A").trim(),
-      installationStatus: String(entry.installationStatus || "Pending").trim(),
-      remarksByInstallation: String(entry.remarksByInstallation || "").trim(),
-      dispatchStatus: String(entry.dispatchStatus || "Not Dispatched").trim(),
-      salesPerson: String(entry.salesPerson || "").trim() || null,
-      shippingAddress: String(entry.shippingAddress || "").trim() || null,
-      billingAddress: String(entry.billingAddress || "").trim() || null,
-      company: String(entry.company || "ProMark").trim(),
-      transporter: String(entry.transporter || "").trim() || null,
-      transporterDetails: String(entry.transporterDetails || "").trim() || null,
-      docketNo: String(entry.docketNo || "").trim() || null,
-      receiptDate: entry.receiptDate
-        ? moment(entry.receiptDate, [
-            "YYYY-MM-DD",
-            "DD/MM/YYYY",
-            "MM/DD/YYYY",
-          ]).toDate()
-        : null,
-      sostatus: String(entry.sostatus || "Pending for Approval").trim(),
-      invoiceNo: entry.invoiceNo !== undefined ? Number(entry.invoiceNo) : null,
-      invoiceDate: entry.invoiceDate
-        ? moment(entry.invoiceDate, [
-            "YYYY-MM-DD",
-            "DD/MM/YYYY",
-            "MM/DD/YYYY",
-          ]).toDate()
-        : null,
-      remarks: String(entry.remarks || "").trim() || null,
-      fulfillingStatus: String(entry.fulfillingStatus || "Pending").trim(),
-      remarksByProduction:
-        String(entry.remarksByProduction || "").trim() || null,
-      // New fields from updated schema
-      billNumber: String(entry.billNumber || "").trim() || null,
-      completionStatus: String(entry.completionStatus || "In Progress").trim(),
-      fulfillmentDate: entry.fulfillmentDate
-        ? moment(entry.fulfillmentDate, [
-            "YYYY-MM-DD",
-            "DD/MM/YYYY",
-            "MM/DD/YYYY",
-          ]).toDate()
-        : null,
-      remarksByAccounts: String(entry.remarksByAccounts || "").trim() || null,
-      paymentReceived: String(entry.paymentReceived || "Not Received").trim(),
-    }));
+    const validatedEntries = newEntries.map((entry, index) => {
+      const products = entry.products.map((p) => ({
+        productType: String(p.productType || "").trim() || null,
+        size: String(p.size || "").trim() || null,
+        spec: String(p.spec || "").trim() || null,
+        qty: p.qty !== undefined ? Number(p.qty) : null,
+        unitPrice: p.unitPrice !== undefined ? Number(p.unitPrice) : null,
+        serialNo: String(p.serialNo || "").trim() || null,
+        modelNo: String(p.modelNo || "").trim() || null,
+      }));
+
+      return {
+        orderId: `PMTO${startSequence + index}`,
+        soDate: entry.soDate
+          ? moment(entry.soDate, [
+              "YYYY-MM-DD",
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+            ]).toDate()
+          : null,
+        committedDate: entry.committedDate
+          ? moment(entry.committedDate, [
+              "YYYY-MM-DD",
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+            ]).toDate()
+          : null,
+        dispatchFrom: String(entry.dispatchFrom || "").trim() || null,
+        status: String(entry.status || "Pending").trim(),
+        dispatchDate: entry.dispatchDate
+          ? moment(entry.dispatchDate, [
+              "YYYY-MM-DD",
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+            ]).toDate()
+          : null,
+        partyAndAddress: String(entry.partyAndAddress || "").trim() || null,
+        city: String(entry.city || "").trim() || null,
+        state: String(entry.state || "").trim() || null,
+        pinCode: String(entry.pinCode || "").trim() || null,
+        name: String(entry.name || "").trim() || null,
+        contactNo: String(entry.contactNo || "").trim() || null,
+        customerEmail: String(entry.customerEmail || "").trim() || null,
+        products,
+        gst: entry.gst !== undefined ? Number(entry.gst) : null,
+        total: entry.total !== undefined ? Number(entry.total) : null,
+        paymentTerms: String(entry.paymentTerms || "").trim() || null,
+        amount2: entry.amount2 !== undefined ? Number(entry.amount2) : null,
+        freightcs: String(entry.freightcs || "").trim() || null,
+        installation: String(entry.installation || "N/A").trim(),
+        installationStatus: String(
+          entry.installationStatus || "Pending"
+        ).trim(),
+        remarksByInstallation: String(entry.remarksByInstallation || "").trim(),
+        dispatchStatus: String(entry.dispatchStatus || "Not Dispatched").trim(),
+        salesPerson: String(entry.salesPerson || "").trim() || null,
+        shippingAddress: String(entry.shippingAddress || "").trim() || null,
+        billingAddress: String(entry.billingAddress || "").trim() || null,
+        company: String(entry.company || "ProMark").trim(),
+        transporter: String(entry.transporter || "").trim() || null,
+        transporterDetails:
+          String(entry.transporterDetails || "").trim() || null,
+        docketNo: String(entry.docketNo || "").trim() || null,
+        receiptDate: entry.receiptDate
+          ? moment(entry.receiptDate, [
+              "YYYY-MM-DD",
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+            ]).toDate()
+          : null,
+        sostatus: String(entry.sostatus || "Pending for Approval").trim(),
+        invoiceNo:
+          entry.invoiceNo !== undefined ? Number(entry.invoiceNo) : null,
+        invoiceDate: entry.invoiceDate
+          ? moment(entry.invoiceDate, [
+              "YYYY-MM-DD",
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+            ]).toDate()
+          : null,
+        remarks: String(entry.remarks || "").trim() || null,
+        fulfillingStatus: String(entry.fulfillingStatus || "Pending").trim(),
+        remarksByProduction:
+          String(entry.remarksByProduction || "").trim() || null,
+        billNumber: String(entry.billNumber || "").trim() || null,
+        completionStatus: String(
+          entry.completionStatus || "In Progress"
+        ).trim(),
+        fulfillmentDate: entry.fulfillmentDate
+          ? moment(entry.fulfillmentDate, [
+              "YYYY-MM-DD",
+              "DD/MM/YYYY",
+              "MM/DD/YYYY",
+            ]).toDate()
+          : null,
+        remarksByAccounts: String(entry.remarksByAccounts || "").trim() || null,
+        paymentReceived: String(entry.paymentReceived || "Not Received").trim(),
+      };
+    });
 
     const insertedOrders = await Order.insertMany(validatedEntries, {
       ordered: false,
@@ -560,13 +607,12 @@ const bulkUploadOrders = async (req, res) => {
   }
 };
 // Get production orders
-
 const getProductionOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       sostatus: "Approved",
       completionStatus: { $ne: "Complete" },
-      fulfillingStatus: { $ne: "Partial Dispatch" }, // Exclude Partial Dispatch
+      fulfillingStatus: { $ne: "Partial Dispatch" },
     }).lean();
 
     res.status(200).json({ success: true, data: orders });
@@ -581,7 +627,6 @@ const getProductionOrders = async (req, res) => {
 };
 
 // Get finished goods orders
-
 const getFinishedGoodsOrders = async (req, res) => {
   try {
     const orders = await Order.find({
@@ -589,7 +634,9 @@ const getFinishedGoodsOrders = async (req, res) => {
         { completionStatus: "Complete" },
         { fulfillingStatus: "Partial Dispatch" },
       ],
-      dispatchStatus: { $ne: "Dispatched" }, // Exclude Dispatched orders
+      dispatchStatus: {
+        $in: ["Not Dispatched", "Docket Awaited Dispatched", "Dispatched"],
+      }, // Include all statuses except "Delivered"
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
@@ -601,11 +648,13 @@ const getFinishedGoodsOrders = async (req, res) => {
     });
   }
 };
+
+// Get installation orders
 const getInstallationOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      dispatchStatus: "Dispatched",
-      installationStatus: { $ne: "Completed" }, // Exclude completed installations
+      dispatchStatus: "Delivered", // Only "Delivered" orders move here
+      installationStatus: { $ne: "Completed" },
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
@@ -618,6 +667,7 @@ const getInstallationOrders = async (req, res) => {
   }
 };
 
+// Get accounts orders
 const getAccountsOrders = async (req, res) => {
   try {
     const orders = await Order.find({
@@ -634,6 +684,7 @@ const getAccountsOrders = async (req, res) => {
     });
   }
 };
+
 module.exports = {
   getInstallationOrders,
   getAccountsOrders,
