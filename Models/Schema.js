@@ -92,7 +92,7 @@ const orderSchema = new mongoose.Schema(
     remarks: { type: String },
     sostatus: {
       type: String,
-      enum: ["Pending for Approval", "Approved"],
+      enum: ["Pending for Approval", "Accounts Approved", "Approved"],
       default: "Pending for Approval",
     },
     shippingAddress: { type: String, default: "" },
