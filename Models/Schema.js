@@ -15,6 +15,7 @@ const productSchema = new mongoose.Schema({
   unitPrice: { type: Number, required: true },
   serialNos: [{ type: String }],
   modelNos: [{ type: String }],
+  gst: { type: Number, default: 0 },
 });
 
 const orderSchema = new mongoose.Schema(
@@ -45,7 +46,6 @@ const orderSchema = new mongoose.Schema(
     customername: { type: String },
     customerEmail: { type: String },
     products: [productSchema],
-    gst: { type: Number, default: 0 },
     total: { type: Number, required: true },
     paymentTerms: { type: String },
     amount2: { type: Number, default: 0 },

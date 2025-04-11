@@ -29,7 +29,6 @@ const createOrder = async (req, res) => {
       customerEmail,
       customername,
       products,
-      gst,
       paymentTerms,
       orderType,
       amount2,
@@ -56,16 +55,26 @@ const createOrder = async (req, res) => {
     }
 
     for (const product of products) {
-      if (!product.productType || !product.qty || !product.unitPrice) {
+      if (
+        !product.productType ||
+        !product.qty ||
+        !product.unitPrice ||
+        product.gst === undefined
+      ) {
         return res.status(400).json({
           error: "Invalid product data",
-          details: "Each product must have productType, qty, and unitPrice",
+          details:
+            "Each product must have productType, qty, unitPrice, and gst",
         });
       }
-      if (isNaN(Number(product.qty)) || isNaN(Number(product.unitPrice))) {
+      if (
+        isNaN(Number(product.qty)) ||
+        isNaN(Number(product.unitPrice)) ||
+        isNaN(Number(product.gst))
+      ) {
         return res.status(400).json({
           error: "Invalid product data",
-          details: "qty and unitPrice must be valid numbers",
+          details: "qty, unitPrice, and gst must be valid numbers",
         });
       }
       // Ensure serialNos and modelNos are arrays
@@ -82,7 +91,9 @@ const createOrder = async (req, res) => {
         (sum, product) =>
           sum +
           Number(product.qty) * Number(product.unitPrice) +
-          (Number(gst || 0) / 100) * Number(product.unitPrice),
+          (Number(product.gst || 0) / 100) *
+            Number(product.unitPrice) *
+            Number(product.qty),
         0
       ) +
       Number(amount2 || 0) +
@@ -101,7 +112,6 @@ const createOrder = async (req, res) => {
       customerEmail,
       customername,
       products,
-      gst: Number(gst || 0),
       paymentTerms,
       amount2: Number(amount2 || 0),
       freightcs,
