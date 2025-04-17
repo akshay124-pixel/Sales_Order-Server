@@ -14,6 +14,7 @@ const getAllOrders = async (req, res) => {
 };
 
 // Create a new order
+
 const createOrder = async (req, res) => {
   try {
     const {
@@ -29,7 +30,6 @@ const createOrder = async (req, res) => {
       customerEmail,
       customername,
       products,
-      paymentTerms,
       orderType,
       amount2,
       freightcs,
@@ -40,8 +40,15 @@ const createOrder = async (req, res) => {
       billingAddress,
       sameAddress,
       total,
+      paymentCollected,
+      paymentMethod,
+      paymentDue,
+      neftTransactionId,
+      chequeId,
+      remarks,
     } = req.body;
 
+    // Validate required fields
     if (
       !soDate ||
       !products ||
@@ -54,6 +61,22 @@ const createOrder = async (req, res) => {
       });
     }
 
+    // Validate payment method-specific fields
+    if (paymentMethod === "NEFT" && !neftTransactionId) {
+      return res.status(400).json({
+        error: "Missing NEFT Transaction ID",
+        details: "NEFT Transaction ID is required for NEFT payments",
+      });
+    }
+
+    if (paymentMethod === "Cheque" && !chequeId) {
+      return res.status(400).json({
+        error: "Missing Cheque ID",
+        details: "Cheque ID is required for Cheque payments",
+      });
+    }
+
+    // Validate product data
     for (const product of products) {
       if (
         !product.productType ||
@@ -86,6 +109,7 @@ const createOrder = async (req, res) => {
         : [];
     }
 
+    // Calculate total
     const calculatedTotal =
       products.reduce(
         (sum, product) =>
@@ -99,6 +123,10 @@ const createOrder = async (req, res) => {
       Number(amount2 || 0) +
       Number(freightcs || 0);
 
+    const calculatedPaymentDue =
+      calculatedTotal - Number(paymentCollected || 0);
+
+    // Create new order
     const order = new Order({
       soDate: new Date(soDate),
       committedDate: committedDate ? new Date(committedDate) : null,
@@ -112,7 +140,6 @@ const createOrder = async (req, res) => {
       customerEmail,
       customername,
       products,
-      paymentTerms,
       amount2: Number(amount2 || 0),
       freightcs,
       installation,
@@ -124,6 +151,15 @@ const createOrder = async (req, res) => {
       sameAddress,
       total:
         total !== undefined && !isNaN(total) ? Number(total) : calculatedTotal,
+      paymentCollected: String(paymentCollected || ""),
+      paymentMethod,
+      paymentDue:
+        paymentDue !== undefined && !isNaN(paymentDue)
+          ? String(paymentDue)
+          : String(calculatedPaymentDue),
+      neftTransactionId: neftTransactionId || "",
+      chequeId: chequeId || "",
+      remarks,
     });
 
     await order.validate();
@@ -141,7 +177,9 @@ const createOrder = async (req, res) => {
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
-// Edit an existing order
+
+// Edit an order
+
 const editEntry = async (req, res) => {
   try {
     const {
@@ -150,21 +188,25 @@ const editEntry = async (req, res) => {
       dispatchFrom,
       status,
       dispatchDate,
+      name,
       partyAndAddress,
       city,
       state,
       pinCode,
-      name,
       contactNo,
       customerEmail,
       customername,
       products,
-      orderType,
-      gst,
       total,
+      paymentCollected,
+      paymentMethod,
+      paymentDue,
+      neftTransactionId,
+      chequeId,
       paymentTerms,
       amount2,
       freightcs,
+      orderType,
       installation,
       installationStatus,
       remarksByInstallation,
@@ -175,25 +217,29 @@ const editEntry = async (req, res) => {
       transporterDetails,
       docketNo,
       receiptDate,
-      remarks,
-      sostatus,
+      shippingAddress,
+      billingAddress,
       invoiceNo,
       invoiceDate,
       fulfillingStatus,
-      shippingAddress,
-      billingAddress,
       remarksByProduction,
       remarksByAccounts,
       paymentReceived,
       billNumber,
+      completionStatus,
+      fulfillmentDate,
+      remarks,
+      sostatus,
     } = req.body;
 
+    // Validate ObjectId
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res
         .status(400)
         .json({ success: false, message: "Invalid order ID" });
     }
 
+    // Find existing order
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res
@@ -201,125 +247,289 @@ const editEntry = async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    const updateData = {
-      ...(soDate !== undefined && { soDate: soDate ? new Date(soDate) : null }),
-      ...(committedDate !== undefined && {
-        committedDate: committedDate ? new Date(committedDate) : null,
-      }),
-      ...(dispatchFrom !== undefined && {
-        dispatchFrom: dispatchFrom?.trim() || "",
-      }),
-      ...(status !== undefined && { status: status?.trim() || "" }),
-      ...(dispatchDate !== undefined && {
-        dispatchDate: dispatchDate ? new Date(dispatchDate) : null,
-      }),
-      ...(partyAndAddress !== undefined && {
-        partyAndAddress: partyAndAddress?.trim() || "",
-      }),
-      ...(city !== undefined && { city: city?.trim() || "" }),
-      ...(state !== undefined && { state: state?.trim() || "" }),
-      ...(pinCode !== undefined && { pinCode: pinCode?.trim() || "" }),
-      ...(name !== undefined && { name: name?.trim() || "" }),
-      ...(contactNo !== undefined && { contactNo: contactNo?.trim() || "" }),
-      ...(customerEmail !== undefined && {
-        customerEmail: customerEmail?.trim() || "",
-      }),
-      ...(customername !== undefined && {
-        customername: customername?.trim() || "",
-      }),
-      ...(products !== undefined && {
-        products: products.map((p) => ({
-          ...p,
-          serialNos: Array.isArray(p.serialNos) ? p.serialNos : [],
-          modelNos: Array.isArray(p.modelNos) ? p.modelNos : [],
-        })),
-      }),
-      ...(gst !== undefined && { gst: gst !== "" ? Number(gst) : null }),
-      ...(total !== undefined && {
-        total: total !== "" ? Number(total) : order.total,
-      }),
-      ...(paymentTerms !== undefined && {
-        paymentTerms: paymentTerms?.trim() || "",
-      }),
-      ...(amount2 !== undefined && {
-        amount2: amount2 !== "" ? Number(amount2) : null,
-      }),
-      ...(freightcs !== undefined && {
-        freightcs: freightcs?.trim() || "",
-      }),
-      ...(orderType !== undefined && {
-        orderType: orderType?.trim() || "",
-      }),
-      ...(installation !== undefined && {
-        installation: installation?.trim() || "",
-      }),
-      ...(installationStatus !== undefined && {
-        installationStatus: installationStatus?.trim() || "",
-      }),
-      ...(remarksByInstallation !== undefined && {
-        remarksByInstallation: remarksByInstallation?.trim() || "",
-      }),
-      ...(dispatchStatus !== undefined && {
-        dispatchStatus: dispatchStatus?.trim() || "",
-      }),
-      ...(salesPerson !== undefined && {
-        salesPerson: salesPerson?.trim() || "",
-      }),
-      ...(company !== undefined && { company: company?.trim() || "" }),
-      ...(transporter !== undefined && {
-        transporter: transporter?.trim() || "",
-      }),
-      ...(transporterDetails !== undefined && {
-        transporterDetails: transporterDetails?.trim() || "",
-      }),
-      ...(docketNo !== undefined && { docketNo: docketNo?.trim() || "" }),
-      ...(receiptDate !== undefined && {
-        receiptDate: receiptDate ? new Date(receiptDate) : null,
-      }),
-      ...(remarks !== undefined && { remarks: remarks?.trim() || "" }),
-      ...(sostatus !== undefined && {
-        sostatus: sostatus?.trim() || "Pending for Approval",
-      }),
-      ...(invoiceNo !== undefined && {
-        invoiceNo: invoiceNo !== "" ? Number(invoiceNo) : 0,
-      }),
-      ...(invoiceDate !== undefined && {
-        invoiceDate: invoiceDate ? new Date(invoiceDate) : null,
-      }),
-      ...(fulfillingStatus !== undefined && {
-        fulfillingStatus: fulfillingStatus?.trim() || "Pending",
-      }),
-      ...(shippingAddress !== undefined && {
-        shippingAddress: shippingAddress?.trim() || "",
-      }),
-      ...(billingAddress !== undefined && {
-        billingAddress: billingAddress?.trim() || "",
-      }),
-      ...(remarksByProduction !== undefined && {
-        remarksByProduction: remarksByProduction?.trim() || "",
-      }),
-      ...(remarksByAccounts !== undefined && {
-        remarksByAccounts: remarksByAccounts?.trim() || "",
-      }),
-      ...(paymentReceived !== undefined && {
-        paymentReceived: paymentReceived?.trim() || "",
-      }),
-      ...(billNumber !== undefined && {
-        billNumber: billNumber?.trim() || "",
-      }),
-    };
+    // Prepare update data
+    const updateData = {};
 
+    // Handle fields only if provided (partial updates)
+    if (soDate !== undefined) {
+      const parsedDate = new Date(soDate);
+      if (isNaN(parsedDate.getTime())) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid SO Date" });
+      }
+      updateData.soDate = parsedDate;
+    }
+
+    if (committedDate !== undefined) {
+      updateData.committedDate = committedDate ? new Date(committedDate) : null;
+    }
+
+    if (dispatchFrom !== undefined) {
+      updateData.dispatchFrom = dispatchFrom?.trim() || null;
+    }
+
+    if (status !== undefined) {
+      updateData.status = status?.trim() || order.status;
+    }
+
+    if (dispatchDate !== undefined) {
+      updateData.dispatchDate = dispatchDate ? new Date(dispatchDate) : null;
+    }
+
+    if (name !== undefined) {
+      updateData.name = name?.trim() || null;
+    }
+
+    if (partyAndAddress !== undefined) {
+      updateData.partyAndAddress = partyAndAddress?.trim() || null;
+    }
+
+    if (city !== undefined) {
+      updateData.city = city?.trim() || null;
+    }
+
+    if (state !== undefined) {
+      updateData.state = state?.trim() || null;
+    }
+
+    if (pinCode !== undefined) {
+      updateData.pinCode = pinCode?.trim() || null;
+    }
+
+    if (contactNo !== undefined) {
+      updateData.contactNo = contactNo?.trim() || null;
+    }
+
+    if (customerEmail !== undefined) {
+      updateData.customerEmail = customerEmail?.trim() || null;
+    }
+
+    if (customername !== undefined) {
+      updateData.customername = customername?.trim() || null;
+    }
+
+    if (products !== undefined) {
+      updateData.products = products.map((p, index) => {
+        if (!p.productType?.trim()) {
+          throw new Error(`Product ${index + 1}: Product Type is required`);
+        }
+        if (p.qty === undefined || isNaN(p.qty) || Number(p.qty) <= 0) {
+          throw new Error(
+            `Product ${index + 1}: Quantity must be a positive number`
+          );
+        }
+        if (
+          p.unitPrice === undefined ||
+          isNaN(p.unitPrice) ||
+          p.unitPrice < 0
+        ) {
+          throw new Error(
+            `Product ${index + 1}: Unit Price must be a non-negative number`
+          );
+        }
+        return {
+          productType: p.productType.trim(),
+          size: p.size?.trim() || "N/A",
+          spec: p.spec?.trim() || "N/A",
+          qty: Number(p.qty),
+          unitPrice: Number(p.unitPrice),
+          serialNos: Array.isArray(p.serialNos)
+            ? p.serialNos.map((s) => s.trim()).filter(Boolean)
+            : [],
+          modelNos: Array.isArray(p.modelNos)
+            ? p.modelNos.map((m) => m.trim()).filter(Boolean)
+            : [],
+          gst: p.gst !== undefined && !isNaN(p.gst) ? Number(p.gst) : 0,
+        };
+      });
+    }
+
+    if (total !== undefined) {
+      if (isNaN(total) || total <= 0) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Total must be a positive number" });
+      }
+      updateData.total = Number(total);
+    }
+
+    if (paymentCollected !== undefined) {
+      updateData.paymentCollected =
+        paymentCollected !== "" && paymentCollected !== null
+          ? String(paymentCollected).trim()
+          : null;
+    }
+
+    if (paymentMethod !== undefined) {
+      const validMethods = ["Cash", "NEFT", "RTGS", "Cheque", ""];
+      if (paymentMethod && !validMethods.includes(paymentMethod.trim())) {
+        return res
+          .status(400)
+          .json({ success: false, message: "Invalid Payment Method" });
+      }
+      updateData.paymentMethod = paymentMethod?.trim() || "";
+    }
+
+    if (paymentDue !== undefined) {
+      updateData.paymentDue =
+        paymentDue !== "" && paymentDue !== null
+          ? String(paymentDue).trim()
+          : null;
+    }
+
+    if (neftTransactionId !== undefined) {
+      updateData.neftTransactionId = neftTransactionId?.trim() || null;
+    }
+
+    if (chequeId !== undefined) {
+      updateData.chequeId = chequeId?.trim() || null;
+    }
+
+    if (paymentTerms !== undefined) {
+      updateData.paymentTerms = paymentTerms?.trim() || null;
+    }
+
+    if (amount2 !== undefined) {
+      updateData.amount2 =
+        amount2 !== undefined && !isNaN(amount2) ? Number(amount2) : 0;
+    }
+
+    if (freightcs !== undefined) {
+      updateData.freightcs = freightcs?.trim() || null;
+    }
+
+    if (orderType !== undefined) {
+      updateData.orderType = orderType?.trim() || order.orderType;
+    }
+
+    if (installation !== undefined) {
+      updateData.installation = installation?.trim() || "N/A";
+    }
+
+    if (installationStatus !== undefined) {
+      updateData.installationStatus =
+        installationStatus?.trim() || order.installationStatus;
+    }
+
+    if (remarksByInstallation !== undefined) {
+      updateData.remarksByInstallation = remarksByInstallation?.trim() || "";
+    }
+
+    if (dispatchStatus !== undefined) {
+      updateData.dispatchStatus =
+        dispatchStatus?.trim() || order.dispatchStatus;
+    }
+
+    if (salesPerson !== undefined) {
+      updateData.salesPerson = salesPerson?.trim() || null;
+    }
+
+    if (company !== undefined) {
+      updateData.company = company?.trim() || order.company;
+    }
+
+    if (transporter !== undefined) {
+      updateData.transporter = transporter?.trim() || null;
+    }
+
+    if (transporterDetails !== undefined) {
+      updateData.transporterDetails = transporterDetails?.trim() || null;
+    }
+
+    if (docketNo !== undefined) {
+      updateData.docketNo = docketNo?.trim() || null;
+    }
+
+    if (receiptDate !== undefined) {
+      updateData.receiptDate = receiptDate ? new Date(receiptDate) : null;
+    }
+
+    if (shippingAddress !== undefined) {
+      updateData.shippingAddress = shippingAddress?.trim() || "";
+    }
+
+    if (billingAddress !== undefined) {
+      updateData.billingAddress = billingAddress?.trim() || "";
+    }
+
+    if (invoiceNo !== undefined) {
+      updateData.invoiceNo = invoiceNo?.trim() || null;
+    }
+
+    if (invoiceDate !== undefined) {
+      updateData.invoiceDate = invoiceDate ? new Date(invoiceDate) : null;
+    }
+
+    if (fulfillingStatus !== undefined) {
+      updateData.fulfillingStatus =
+        fulfillingStatus?.trim() || order.fulfillingStatus;
+    }
+
+    if (remarksByProduction !== undefined) {
+      updateData.remarksByProduction = remarksByProduction?.trim() || null;
+    }
+
+    if (remarksByAccounts !== undefined) {
+      updateData.remarksByAccounts = remarksByAccounts?.trim() || null;
+    }
+
+    if (paymentReceived !== undefined) {
+      updateData.paymentReceived =
+        paymentReceived?.trim() || order.paymentReceived;
+    }
+
+    if (billNumber !== undefined) {
+      updateData.billNumber = billNumber?.trim() || null;
+    }
+
+    if (completionStatus !== undefined) {
+      updateData.completionStatus =
+        completionStatus?.trim() || order.completionStatus;
+    }
+
+    if (fulfillmentDate !== undefined) {
+      updateData.fulfillmentDate = fulfillmentDate
+        ? new Date(fulfillmentDate)
+        : null;
+    }
+
+    if (remarks !== undefined) {
+      updateData.remarks = remarks?.trim() || null;
+    }
+
+    if (sostatus !== undefined) {
+      updateData.sostatus = sostatus?.trim() || order.sostatus;
+    }
+
+    // Additional validations
+    if (updateData.paymentMethod === "NEFT" && !updateData.neftTransactionId) {
+      return res.status(400).json({
+        success: false,
+        message: "NEFT Transaction ID is required for NEFT payments",
+      });
+    }
+
+    if (updateData.paymentMethod === "Cheque" && !updateData.chequeId) {
+      return res.status(400).json({
+        success: false,
+        message: "Cheque ID is required for Cheque payments",
+      });
+    }
+
+    // Automatic completion status update
     if (
-      fulfillingStatus === "Fulfilled" &&
+      updateData.fulfillingStatus === "Fulfilled" &&
       order.fulfillingStatus !== "Fulfilled"
     ) {
       updateData.completionStatus = "Complete";
-      updateData.fulfillmentDate = new Date();
+      updateData.fulfillmentDate = updateData.fulfillmentDate || new Date();
     }
 
+    // Update order
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
-      updateData,
+      { $set: updateData },
       { new: true, runValidators: true }
     ).lean();
 
@@ -342,6 +552,12 @@ const editEntry = async (req, res) => {
         success: false,
         message: "Validation failed",
         errors: messages,
+      });
+    }
+    if (error.message.includes("Product")) {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
       });
     }
     res.status(500).json({

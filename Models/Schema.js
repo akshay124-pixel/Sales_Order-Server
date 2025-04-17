@@ -5,17 +5,15 @@ const counterSchema = new mongoose.Schema({
   sequence: { type: Number, default: 0 },
 });
 
-const Counter = mongoose.model("Counter", counterSchema);
-
 const productSchema = new mongoose.Schema({
-  productType: { type: String, required: true },
-  size: { type: String, default: "N/A" },
-  spec: { type: String, default: "N/A" },
-  qty: { type: Number, required: true },
-  unitPrice: { type: Number, required: true },
-  serialNos: [{ type: String }],
-  modelNos: [{ type: String }],
-  gst: { type: Number, default: 0 },
+  productType: { type: String, required: true, trim: true },
+  size: { type: String, default: "N/A", trim: true },
+  spec: { type: String, default: "N/A", trim: true },
+  qty: { type: Number, required: true, min: 1 },
+  unitPrice: { type: Number, required: true, min: 0 },
+  serialNos: [{ type: String, trim: true }],
+  modelNos: [{ type: String, trim: true }],
+  gst: { type: Number, default: 0, min: 0, max: 100 },
 });
 
 const orderSchema = new mongoose.Schema(
@@ -23,7 +21,7 @@ const orderSchema = new mongoose.Schema(
     orderId: { type: String, unique: true },
     soDate: { type: Date, required: true },
     committedDate: { type: Date },
-    dispatchFrom: { type: String },
+    dispatchFrom: { type: String, trim: true },
     status: {
       type: String,
       enum: [
@@ -37,19 +35,28 @@ const orderSchema = new mongoose.Schema(
       default: "Pending",
     },
     dispatchDate: { type: Date },
-    name: { type: String },
-    partyAndAddress: { type: String },
-    city: { type: String },
-    state: { type: String },
-    pinCode: { type: String },
-    contactNo: { type: String },
-    customername: { type: String },
-    customerEmail: { type: String },
+    name: { type: String, trim: true },
+    partyAndAddress: { type: String, trim: true },
+    city: { type: String, trim: true },
+    state: { type: String, trim: true },
+    pinCode: { type: String, trim: true },
+    contactNo: { type: String, trim: true },
+    customerEmail: { type: String, trim: true },
+    customername: { type: String, trim: true },
     products: [productSchema],
-    total: { type: Number, required: true },
-    paymentTerms: { type: String },
-    amount2: { type: Number, default: 0 },
-    freightcs: { type: String },
+    total: { type: Number, required: true, min: 0 },
+    paymentCollected: { type: String, trim: true },
+    paymentMethod: {
+      type: String,
+      enum: ["Cash", "NEFT", "RTGS", "Cheque", ""],
+      default: "",
+    },
+    paymentDue: { type: String, trim: true },
+    neftTransactionId: { type: String, trim: true },
+    chequeId: { type: String, trim: true },
+    paymentTerms: { type: String, trim: true },
+    amount2: { type: Number, default: 0, min: 0 },
+    freightcs: { type: String, trim: true },
     orderType: {
       type: String,
       enum: [
@@ -62,13 +69,13 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "Private order",
     },
-    installation: { type: String, default: "N/A" },
+    installation: { type: String, default: "N/A", trim: true },
     installationStatus: {
       type: String,
       enum: ["Pending", "In Progress", "Completed", "Failed"],
       default: "Pending",
     },
-    remarksByInstallation: { type: String, default: "" },
+    remarksByInstallation: { type: String, default: "", trim: true },
     dispatchStatus: {
       type: String,
       enum: [
@@ -79,42 +86,41 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "Not Dispatched",
     },
-    salesPerson: { type: String },
+    salesPerson: { type: String, trim: true },
     company: {
       type: String,
       enum: ["Promark", "Promine", "Others"],
       default: "Promark",
     },
-    transporter: { type: String },
-    transporterDetails: { type: String },
-    docketNo: { type: String },
+    transporter: { type: String, trim: true },
+    transporterDetails: { type: String, trim: true },
+    docketNo: { type: String, trim: true },
     receiptDate: { type: Date },
-    remarks: { type: String },
-    sostatus: {
-      type: String,
-      enum: ["Pending for Approval", "Accounts Approved", "Approved"],
-      default: "Pending for Approval",
-    },
-    shippingAddress: { type: String, default: "" },
-    billingAddress: { type: String, default: "" },
-    sameAddress: { type: Boolean, default: false },
-    invoiceNo: { type: String },
+    shippingAddress: { type: String, default: "", trim: true },
+    billingAddress: { type: String, default: "", trim: true },
+    invoiceNo: { type: String, trim: true },
     invoiceDate: { type: Date },
-    fulfillingStatus: { type: String, default: "Pending" },
-    remarksByProduction: { type: String },
-    remarksByAccounts: { type: String },
+    fulfillingStatus: { type: String, default: "Pending", trim: true },
+    remarksByProduction: { type: String, trim: true },
+    remarksByAccounts: { type: String, trim: true },
     paymentReceived: {
       type: String,
       enum: ["Not Received", "Received"],
       default: "Not Received",
     },
-    billNumber: { type: String },
+    billNumber: { type: String, trim: true },
     completionStatus: {
       type: String,
       enum: ["In Progress", "Complete"],
       default: "In Progress",
     },
     fulfillmentDate: { type: Date },
+    remarks: { type: String, trim: true },
+    sostatus: {
+      type: String,
+      enum: ["Pending for Approval", "Accounts Approved", "Approved"],
+      default: "Pending for Approval",
+    },
   },
   { timestamps: true }
 );
@@ -123,6 +129,7 @@ const orderSchema = new mongoose.Schema(
 orderSchema.index({ orderId: 1 });
 orderSchema.index({ soDate: 1 });
 
+// Auto-generate orderId for new orders
 orderSchema.pre("save", async function (next) {
   if (this.isNew && !this.orderId) {
     try {
@@ -142,5 +149,6 @@ orderSchema.pre("save", async function (next) {
 });
 
 const Order = mongoose.model("Order", orderSchema);
+const Counter = mongoose.model("Counter", counterSchema);
 
 module.exports = { Order, Counter };
