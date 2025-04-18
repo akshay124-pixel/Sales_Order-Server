@@ -1,8 +1,7 @@
 const { Order, Counter } = require("../Models/Schema");
 const mongoose = require("mongoose");
 const XLSX = require("xlsx");
-const moment = require("moment");
-const { format, parse } = require("date-fns");
+
 const getAllOrders = async (req, res) => {
   try {
     const orders = await Order.find();
@@ -610,157 +609,25 @@ const DeleteData = async (req, res) => {
 };
 
 // Export orders to XLSX
-// Export orders to XLSX
-const exportentry = async (req, res) => {
-  try {
-    const orders = await Order.find().lean();
-
-    // Log the orders to debug
-    console.log("Orders fetched:", JSON.stringify(orders, null, 2));
-
-    // Check if orders is an array
-    if (!Array.isArray(orders) || orders.length === 0) {
-      console.warn("No orders found.");
-      const ws = XLSX.utils.json_to_sheet([]);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Orders");
-
-      const fileBuffer = XLSX.write(wb, { bookType: "xlsx", type: "buffer" });
-
-      res.setHeader("Content-Disposition", "attachment; filename=orders.xlsx");
-      res.setHeader(
-        "Content-Type",
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-      );
-      return res.send(fileBuffer);
-    }
-
-    const formattedEntries = [];
-
-    orders.forEach((entry) => {
-      // Check if products array exists; if not, construct a single product from top-level fields
-      const products =
-        Array.isArray(entry.products) && entry.products.length > 0
-          ? entry.products
-          : [
-              {
-                productType: entry.productType || "Not Found",
-                size: entry.size || "Not Found",
-                spec: entry.spec || "Not Found",
-                qty: entry.qty || 0,
-                unitPrice: entry.unitPrice || 0,
-                serialNos: entry.serialno ? [entry.serialno] : [],
-                modelNos: entry.modelNo ? [entry.modelNo] : [],
-              },
-            ];
-
-      products.forEach((product, index) => {
-        formattedEntries.push({
-          orderId: entry.orderId || "",
-          soDate: entry.soDate ? format(entry.soDate, "yyyy-MM-dd") : "",
-          committedDate: entry.committedDate
-            ? format(entry.committedDate, "yyyy-MM-dd")
-            : "",
-          dispatchFrom: entry.dispatchFrom || "",
-          status: entry.status || "Pending",
-          dispatchDate: entry.dispatchDate
-            ? format(entry.dispatchDate, "yyyy-MM-dd")
-            : "",
-          partyAndAddress: entry.partyAndAddress || "",
-          city: entry.city || "",
-          state: entry.state || "",
-          pinCode: entry.pinCode || "",
-          name: entry.name || "",
-          contactNo: entry.contactNo || "",
-          customerEmail: entry.customerEmail || "",
-          customername: entry.customername || "",
-          productType: product.productType || "",
-          productSize: product.size || "",
-          productSpec: product.spec || "",
-          productQty: product.qty || 0,
-          productUnitPrice: product.unitPrice || 0,
-          productSerialNos: Array.isArray(product.serialNos)
-            ? product.serialNos.join(", ")
-            : "",
-          productModelNos: Array.isArray(product.modelNos)
-            ? product.modelNos.join(", ")
-            : "",
-          gst: index === 0 ? entry.gst || 0 : "",
-          total: index === 0 ? entry.total || 0 : "",
-          paymentTerms: index === 0 ? entry.paymentTerms || "" : "",
-          amount2: index === 0 ? entry.amount2 || 0 : "",
-          freightcs: index === 0 ? entry.freightcs || "" : "",
-          installation: index === 0 ? entry.installation || "" : "",
-          installationStatus: index === 0 ? entry.installationStatus || "" : "",
-          remarksByInstallation:
-            index === 0 ? entry.remarksByInstallation || "" : "",
-          dispatchStatus: index === 0 ? entry.dispatchStatus || "" : "",
-          salesPerson: index === 0 ? entry.salesPerson || "" : "",
-          shippingAddress: index === 0 ? entry.shippingAddress || "" : "",
-          billingAddress: index === 0 ? entry.billingAddress || "" : "",
-          company: index === 0 ? entry.company || "" : "",
-          transporter: index === 0 ? entry.transporter || "" : "",
-          transporterDetails: index === 0 ? entry.transporterDetails || "" : "",
-          docketNo: index === 0 ? entry.docketNo || "" : "",
-          receiptDate: entry.receiptDate
-            ? format(entry.receiptDate, "yyyy-MM-dd")
-            : "",
-          sostatus: index === 0 ? entry.sostatus || "" : "",
-          invoiceNo: index === 0 ? entry.invoiceNo || "" : "",
-          invoiceDate: entry.invoiceDate
-            ? format(entry.invoiceDate, "yyyy-MM-dd")
-            : "",
-          remarks: index === 0 ? entry.remarks || "" : "",
-          fulfillingStatus: index === 0 ? entry.fulfillingStatus || "" : "",
-          remarksByProduction:
-            index === 0 ? entry.remarksByProduction || "" : "",
-          billNumber: index === 0 ? entry.billNumber || "" : "",
-          completionStatus: index === 0 ? entry.completionStatus || "" : "",
-          fulfillmentDate: entry.fulfillmentDate
-            ? format(entry.fulfillmentDate, "yyyy-MM-dd")
-            : "",
-          remarksByAccounts: index === 0 ? entry.remarksByAccounts || "" : "",
-          paymentReceived: index === 0 ? entry.paymentReceived || "" : "",
-          orderType: index === 0 ? entry.orderType || "Private order" : "", // Added orderType
-        });
-      });
-    });
-
-    const ws = XLSX.utils.json_to_sheet(formattedEntries);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Orders");
-
-    const fileBuffer = XLSX.write(wb, { bookType: "xlsx", type: "buffer" });
-
-    res.setHeader("Content-Disposition", "attachment; filename=orders.xlsx");
-    res.setHeader(
-      "Content-Type",
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    );
-    res.send(fileBuffer);
-  } catch (error) {
-    console.error("Error exporting orders:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Error exporting orders",
-      error: error.message,
-    });
-  }
+const parseDate = (dateStr) => {
+  if (!dateStr) return null;
+  const date = new Date(String(dateStr).trim());
+  return isNaN(date.getTime()) ? null : date;
 };
 
-// Bulk Upload
 const bulkUploadOrders = async (req, res) => {
   const session = await mongoose.startSession();
   session.startTransaction();
   try {
     const newEntries = req.body;
-    if (!Array.isArray(newEntries) || newEntries.length === 0) {
+    if (!Array.isArray(newEntries)) {
       return res.status(400).json({
         success: false,
         message: "Invalid data format. Array expected.",
       });
     }
 
+    // Increment counter for orderIds
     const counter = await Counter.findByIdAndUpdate(
       { _id: "orderId" },
       { $inc: { sequence: newEntries.length } },
@@ -769,53 +636,60 @@ const bulkUploadOrders = async (req, res) => {
     const startSequence = counter.sequence - newEntries.length + 1;
 
     const validatedEntries = newEntries.map((entry, index) => {
-      // Handle products: check if array exists, otherwise construct from top-level fields
-      const products =
-        Array.isArray(entry.products) && entry.products.length > 0
-          ? entry.products.map((p) => ({
-              productType: String(p.productType || "Not Found").trim(),
-              size: String(p.size || "Not Found").trim(),
-              spec: String(p.spec || "Not Found").trim(),
-              qty: Number(p.qty) || 0,
-              unitPrice: Number(p.unitPrice) || 0,
-              serialNos: Array.isArray(p.serialNos)
-                ? p.serialNos.map((s) => String(s).trim()).filter(Boolean)
-                : String(p.serialNos || "")
-                    .split(",")
-                    .map((s) => s.trim())
-                    .filter(Boolean),
-              modelNos: Array.isArray(p.modelNos)
-                ? p.modelNos.map((m) => String(m).trim()).filter(Boolean)
-                : String(p.modelNos || "")
-                    .split(",")
-                    .map((m) => m.trim())
-                    .filter(Boolean),
-            }))
-          : [
-              {
-                productType: String(entry.productType || "Not Found").trim(),
-                size: String(entry.size || "Not Found").trim(),
-                spec: String(entry.spec || "Not Found").trim(),
-                qty: Number(entry.qty) || 0,
-                unitPrice: Number(entry.unitPrice) || 0,
-                serialNos: entry.serialno
-                  ? [String(entry.serialno).trim()]
-                  : [],
-                modelNos: entry.modelNo ? [String(entry.modelNo).trim()] : [],
-              },
-            ];
+      console.log(
+        `Processing entry ${index + 1}:`,
+        JSON.stringify(entry, null, 2)
+      );
 
-      if (products.some((p) => !p.productType || p.qty === 0)) {
-        throw new Error(`Invalid product data at entry ${index + 1}`);
+      // Handle products (default to a single product if none provided)
+      let products = [];
+      if (Array.isArray(entry.products) && entry.products.length > 0) {
+        products = entry.products.map((p) => ({
+          productType: String(p.productType || "Unknown").trim(),
+          size: String(p.size || "N/A").trim(),
+          spec: String(p.spec || "N/A").trim(),
+          qty: Number(p.qty) || 1,
+          unitPrice: Number(p.unitPrice) || 0,
+          serialNos: Array.isArray(p.serialNos)
+            ? p.serialNos.map((s) => String(s).trim()).filter(Boolean)
+            : String(p.serialNos || "")
+                .split(",")
+                .map((s) => s.trim())
+                .filter(Boolean),
+          modelNos: Array.isArray(p.modelNos)
+            ? p.modelNos.map((m) => String(m).trim()).filter(Boolean)
+            : String(p.modelNos || "")
+                .split(",")
+                .map((m) => m.trim())
+                .filter(Boolean),
+          gst: Number(p.gst) || 0,
+        }));
+      } else {
+        products.push({
+          productType: String(entry.productType || "Unknown").trim(),
+          size: String(entry.size || "N/A").trim(),
+          spec: String(entry.spec || "N/A").trim(),
+          qty: Number(entry.qty) || 1,
+          unitPrice: Number(entry.unitPrice) || 0,
+          serialNos: String(entry.serialNos || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean),
+          modelNos: String(entry.modelNos || "")
+            .split(",")
+            .map((m) => m.trim())
+            .filter(Boolean),
+          gst: Number(entry.gst) || 0,
+        });
       }
 
-      // Calculate total if not provided
+      // Use current date if soDate is missing or invalid
+      const parsedSoDate = parseDate(entry.soDate) || new Date();
+
+      // Calculate total if not provided or invalid
       const calculatedTotal =
         products.reduce(
-          (sum, p) =>
-            sum +
-            p.qty * p.unitPrice +
-            (Number(entry.gst || 0) / 100) * p.unitPrice * p.qty,
+          (sum, p) => sum + p.qty * p.unitPrice * (1 + p.gst / 100),
           0
         ) +
         Number(entry.amount2 || 0) +
@@ -825,68 +699,57 @@ const bulkUploadOrders = async (req, res) => {
 
       return {
         orderId: `PMTO${startSequence + index}`,
-        soDate: entry.soDate
-          ? parse(entry.soDate, "yyyy-MM-dd", new Date())
-          : null,
-        committedDate: entry.committedDate
-          ? parse(entry.committedDate, "yyyy-MM-dd", new Date())
-          : null,
-        dispatchFrom: String(entry.dispatchFrom || "").trim() || null,
+        soDate: parsedSoDate,
+        committedDate: parseDate(entry.committedDate) || null,
+        dispatchFrom: String(entry.dispatchFrom || "").trim(),
         status: String(entry.status || "Pending").trim(),
-        dispatchDate: entry.dispatchDate
-          ? parse(entry.dispatchDate, "yyyy-MM-dd", new Date())
-          : null,
-        partyAndAddress: String(entry.partyAndAddress || "").trim() || null,
-        city: String(entry.city || "").trim() || null,
-        state: String(entry.state || "").trim() || null,
-        pinCode: String(entry.pinCode || "").trim() || null,
-        name: String(entry.name || "").trim() || null,
-        contactNo: String(entry.contactNo || "").trim() || null,
-        customerEmail: String(entry.customerEmail || "").trim() || null,
-        customername: String(entry.customername || "").trim() || null,
+        dispatchDate: parseDate(entry.dispatchDate) || null,
+        name: String(entry.name || "").trim(),
+        partyAndAddress: String(entry.partyAndAddress || "").trim(),
+        city: String(entry.city || "").trim(),
+        state: String(entry.state || "").trim(),
+        pinCode: String(entry.pinCode || "").trim(),
+        contactNo: String(entry.contactNo || "").trim(),
+        customerEmail: String(entry.customerEmail || "").trim(),
+        customername: String(entry.customername || "").trim(),
         products,
-        gst: Number(entry.gst) || 0,
-        total: Number(entry.total) || calculatedTotal,
-        paymentTerms: String(entry.paymentTerms || "").trim() || null,
-        amount2: Number(entry.amount2) || 0,
-        freightcs: String(entry.freightcs || "").trim() || null,
+        total: Number(entry.total) >= 0 ? Number(entry.total) : calculatedTotal,
+        paymentCollected: String(entry.paymentCollected || "").trim(),
+        paymentMethod: String(entry.paymentMethod || "").trim(),
+        paymentDue: String(entry.paymentDue || "").trim(),
+        neftTransactionId: String(entry.neftTransactionId || "").trim(),
+        chequeId: String(entry.chequeId || "").trim(),
+        paymentTerms: String(entry.paymentTerms || "").trim(),
+        amount2: Number(entry.amount2 || 0),
+        freightcs: String(entry.freightcs || "").trim(),
+        orderType: String(entry.orderType || "Private order").trim(),
         installation: String(entry.installation || "N/A").trim(),
         installationStatus: String(
           entry.installationStatus || "Pending"
         ).trim(),
         remarksByInstallation: String(entry.remarksByInstallation || "").trim(),
         dispatchStatus: String(entry.dispatchStatus || "Not Dispatched").trim(),
-        salesPerson: String(entry.salesPerson || "").trim() || null,
-        shippingAddress: String(entry.shippingAddress || "").trim() || null,
-        billingAddress: String(entry.billingAddress || "").trim() || null,
+        salesPerson: String(entry.salesPerson || "").trim(),
         company: String(entry.company || "Promark").trim(),
-        transporter: String(entry.transporter || "").trim() || null,
-        transporterDetails:
-          String(entry.transporterDetails || "").trim() || null,
-        docketNo: String(entry.docketNo || "").trim() || null,
-        receiptDate: entry.receiptDate
-          ? parse(entry.receiptDate, "yyyy-MM-dd", new Date())
-          : null,
-        sostatus: String(entry.sostatus || "Pending for Approval").trim(),
-        invoiceNo: String(entry.invoiceNo || "").trim() || null,
-        invoiceDate: entry.invoiceDate
-          ? parse(entry.invoiceDate, "yyyy-MM-dd", new Date())
-          : null,
-        remarks: String(entry.remarks || "").trim() || null,
+        transporter: String(entry.transporter || "").trim(),
+        transporterDetails: String(entry.transporterDetails || "").trim(),
+        docketNo: String(entry.docketNo || "").trim(),
+        receiptDate: parseDate(entry.receiptDate) || null,
+        shippingAddress: String(entry.shippingAddress || "").trim(),
+        billingAddress: String(entry.billingAddress || "").trim(),
+        invoiceNo: String(entry.invoiceNo || "").trim(),
+        invoiceDate: parseDate(entry.invoiceDate) || null,
         fulfillingStatus: String(entry.fulfillingStatus || "Pending").trim(),
-        remarksByProduction:
-          String(entry.remarksByProduction || "").trim() || null,
-        billNumber: String(entry.billNumber || "").trim() || null,
+        remarksByProduction: String(entry.remarksByProduction || "").trim(),
+        remarksByAccounts: String(entry.remarksByAccounts || "").trim(),
+        paymentReceived: String(entry.paymentReceived || "Not Received").trim(),
+        billNumber: String(entry.billNumber || "").trim(),
         completionStatus: String(
           entry.completionStatus || "In Progress"
         ).trim(),
-        fulfillmentDate: entry.fulfillmentDate
-          ? parse(entry.fulfillmentDate, "yyyy-MM-dd", new Date())
-          : null,
-        remarksByAccounts: String(entry.remarksByAccounts || "").trim() || null,
-        paymentReceived: String(entry.paymentReceived || "Not Received").trim(),
-        orderType:
-          String(entry.orderType || "Private order").trim() || "Private order", // Added orderType with default
+        fulfillmentDate: parseDate(entry.fulfillmentDate) || null,
+        remarks: String(entry.remarks || "").trim(),
+        sostatus: String(entry.sostatus || "Pending for Approval").trim(),
       };
     });
 
@@ -902,17 +765,163 @@ const bulkUploadOrders = async (req, res) => {
   } catch (error) {
     await session.abortTransaction();
     console.error("Error in bulkUploadOrders:", error);
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({
-        success: false,
-        error: "Validation failed",
-        details: messages,
-      });
-    }
-    res.status(500).json({ success: false, error: error.message });
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      details: error.errors
+        ? Object.values(error.errors).map((err) => err.message)
+        : [],
+    });
   } finally {
     session.endSession();
+  }
+};
+
+const exportentry = async (req, res) => {
+  try {
+    const orders = await Order.find().lean();
+
+    if (!Array.isArray(orders) || orders.length === 0) {
+      console.warn("No orders found.");
+      const ws = XLSX.utils.json_to_sheet([]);
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Orders");
+
+      const fileBuffer = XLSX.write(wb, { bookType: "xlsx", type: "buffer" });
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=orders_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`
+      );
+      res.setHeader(
+        "Content-Type",
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+      );
+      return res.send(fileBuffer);
+    }
+
+    const formattedEntries = orders.flatMap((entry) => {
+      const products =
+        Array.isArray(entry.products) && entry.products.length > 0
+          ? entry.products
+          : [
+              {
+                productType: "Not Found",
+                size: "N/A",
+                spec: "N/A",
+                qty: 0,
+                unitPrice: 0,
+                serialNos: [],
+                modelNos: [],
+                gst: 0,
+              },
+            ];
+
+      return products.map((product, index) => ({
+        orderId: entry.orderId || "",
+        soDate: entry.soDate
+          ? new Date(entry.soDate).toISOString().slice(0, 10)
+          : "",
+        committedDate: entry.committedDate
+          ? new Date(entry.committedDate).toISOString().slice(0, 10)
+          : "",
+        dispatchFrom: entry.dispatchFrom || "",
+        status: entry.status || "Pending",
+        dispatchDate: entry.dispatchDate
+          ? new Date(entry.dispatchDate).toISOString().slice(0, 10)
+          : "",
+        name: entry.name || "",
+        partyAndAddress: entry.partyAndAddress || "",
+        city: entry.city || "",
+        state: entry.state || "",
+        pinCode: entry.pinCode || "",
+        contactNo: entry.contactNo || "",
+        customerEmail: entry.customerEmail || "",
+        customername: entry.customername || "",
+        productType: product.productType || "",
+        size: product.size || "N/A",
+        spec: product.spec || "N/A",
+        qty: product.qty || 0,
+        unitPrice: product.unitPrice || 0,
+        serialNos: Array.isArray(product.serialNos)
+          ? product.serialNos.join(", ")
+          : "",
+        modelNos: Array.isArray(product.modelNos)
+          ? product.modelNos.join(", ")
+          : "",
+        gst: product.gst || 0,
+        total: index === 0 ? entry.total || 0 : "",
+        paymentCollected: index === 0 ? entry.paymentCollected || "" : "",
+        paymentMethod: index === 0 ? entry.paymentMethod || "" : "",
+        paymentDue: index === 0 ? entry.paymentDue || "" : "",
+        neftTransactionId: index === 0 ? entry.neftTransactionId || "" : "",
+        chequeId: index === 0 ? entry.chequeId || "" : "",
+        paymentTerms: index === 0 ? entry.paymentTerms || "" : "",
+        amount2: index === 0 ? entry.amount2 || 0 : "",
+        freightcs: index === 0 ? entry.freightcs || "" : "",
+        orderType: index === 0 ? entry.orderType || "Private order" : "",
+        installation: index === 0 ? entry.installation || "N/A" : "",
+        installationStatus:
+          index === 0 ? entry.installationStatus || "Pending" : "",
+        remarksByInstallation:
+          index === 0 ? entry.remarksByInstallation || "" : "",
+        dispatchStatus:
+          index === 0 ? entry.dispatchStatus || "Not Dispatched" : "",
+        salesPerson: index === 0 ? entry.salesPerson || "" : "",
+        company: index === 0 ? entry.company || "Promark" : "",
+        transporter: index === 0 ? entry.transporter || "" : "",
+        transporterDetails: index === 0 ? entry.transporterDetails || "" : "",
+        docketNo: index === 0 ? entry.docketNo || "" : "",
+        receiptDate: entry.receiptDate
+          ? new Date(entry.receiptDate).toISOString().slice(0, 10)
+          : "",
+        shippingAddress: index === 0 ? entry.shippingAddress || "" : "",
+        billingAddress: index === 0 ? entry.billingAddress || "" : "",
+        invoiceNo: index === 0 ? entry.invoiceNo || "" : "",
+        invoiceDate: entry.invoiceDate
+          ? new Date(entry.invoiceDate).toISOString().slice(0, 10)
+          : "",
+        fulfillingStatus:
+          index === 0 ? entry.fulfillingStatus || "Pending" : "",
+        remarksByProduction: index === 0 ? entry.remarksByProduction || "" : "",
+        remarksByAccounts: index === 0 ? entry.remarksByAccounts || "" : "",
+        paymentReceived:
+          index === 0 ? entry.paymentReceived || "Not Received" : "",
+        billNumber: index === 0 ? entry.billNumber || "" : "",
+        completionStatus:
+          index === 0 ? entry.completionStatus || "In Progress" : "",
+        fulfillmentDate: entry.fulfillmentDate
+          ? new Date(entry.fulfillmentDate).toISOString().slice(0, 10)
+          : "",
+        remarks: index === 0 ? entry.remarks || "" : "",
+        sostatus: index === 0 ? entry.sostatus || "Pending for Approval" : "",
+      }));
+    });
+
+    const ws = XLSX.utils.json_to_sheet(formattedEntries);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Orders");
+
+    const fileBuffer = XLSX.write(wb, { bookType: "xlsx", type: "buffer" });
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=orders_${new Date()
+        .toISOString()
+        .slice(0, 10)}.xlsx`
+    );
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    );
+    res.send(fileBuffer);
+  } catch (error) {
+    console.error("Error exporting orders:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error exporting orders",
+      error: error.message,
+    });
   }
 };
 // Get production orders
