@@ -44,7 +44,7 @@ const orderSchema = new mongoose.Schema(
     customerEmail: { type: String, trim: true },
     customername: { type: String, trim: true },
     products: [productSchema],
-    total: { type: Number, required: true, min: 0 },
+    total: { type: Number, min: 0 },
     paymentCollected: { type: String, trim: true },
     paymentMethod: {
       type: String,
