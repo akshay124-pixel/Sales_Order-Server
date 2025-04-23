@@ -118,7 +118,9 @@ const createOrder = async (req, res) => {
             Number(product.unitPrice) *
             Number(product.qty),
         0
-      ) + Number(freightcs || 0);
+      ) +
+      Number(freightcs || 0) +
+      Number(installation || 0);
 
     const calculatedPaymentDue =
       calculatedTotal - Number(paymentCollected || 0);
