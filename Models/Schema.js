@@ -59,14 +59,7 @@ const orderSchema = new mongoose.Schema(
     freightcs: { type: String, trim: true },
     orderType: {
       type: String,
-      enum: [
-        "GEM order",
-        "Govt. order",
-        "Private order",
-        "For Demo",
-        "Replacement",
-        "For repair purpose",
-      ],
+      enum: ["GEM", "Goverment", "Private", "Demo", "Replacement", "repair"],
       default: "Private order",
     },
     installation: { type: String, default: "N/A", trim: true },

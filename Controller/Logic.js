@@ -714,7 +714,7 @@ const bulkUploadOrders = async (req, res) => {
         paymentTerms: String(entry.paymentTerms || "").trim(),
 
         freightcs: String(entry.freightcs || "").trim(),
-        orderType: String(entry.orderType || "Private order").trim(),
+        orderType: String(entry.orderType || "Private").trim(),
         installation: String(entry.installation || "N/A").trim(),
         installationStatus: String(
           entry.installationStatus || "Pending"
@@ -852,7 +852,7 @@ const exportentry = async (req, res) => {
         paymentTerms: index === 0 ? entry.paymentTerms || "" : "",
 
         freightcs: index === 0 ? entry.freightcs || "" : "",
-        orderType: index === 0 ? entry.orderType || "Private order" : "",
+        orderType: index === 0 ? entry.orderType || "Private" : "",
         installation: index === 0 ? entry.installation || "N/A" : "",
         installationStatus:
           index === 0 ? entry.installationStatus || "Pending" : "",
