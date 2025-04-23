@@ -80,6 +80,7 @@ const orderSchema = new mongoose.Schema(
       default: "Not Dispatched",
     },
     salesPerson: { type: String, trim: true },
+    report: { type: String, trim: true },
     company: {
       type: String,
       enum: ["Promark", "Promine", "Others"],

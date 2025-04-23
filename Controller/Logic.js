@@ -30,7 +30,7 @@ const createOrder = async (req, res) => {
       customername,
       products,
       orderType,
-
+      report,
       freightcs,
       installation,
       salesPerson,
@@ -140,6 +140,7 @@ const createOrder = async (req, res) => {
 
       freightcs,
       installation,
+      report,
       salesPerson,
       company,
       orderType,
@@ -209,6 +210,7 @@ const editEntry = async (req, res) => {
       remarksByInstallation,
       dispatchStatus,
       salesPerson,
+      report,
       company,
       transporter,
       transporterDetails,
@@ -415,6 +417,9 @@ const editEntry = async (req, res) => {
 
     if (salesPerson !== undefined) {
       updateData.salesPerson = salesPerson?.trim() || null;
+    }
+    if (report !== undefined) {
+      updateData.report = report?.trim() || null;
     }
 
     if (company !== undefined) {
@@ -722,6 +727,7 @@ const bulkUploadOrders = async (req, res) => {
         remarksByInstallation: String(entry.remarksByInstallation || "").trim(),
         dispatchStatus: String(entry.dispatchStatus || "Not Dispatched").trim(),
         salesPerson: String(entry.salesPerson || "").trim(),
+        report: String(entry.report || "").trim(),
         company: String(entry.company || "Promark").trim(),
         transporter: String(entry.transporter || "").trim(),
         transporterDetails: String(entry.transporterDetails || "").trim(),
@@ -861,6 +867,7 @@ const exportentry = async (req, res) => {
         dispatchStatus:
           index === 0 ? entry.dispatchStatus || "Not Dispatched" : "",
         salesPerson: index === 0 ? entry.salesPerson || "" : "",
+        report: index === 0 ? entry.report || "" : "",
         company: index === 0 ? entry.company || "Promark" : "",
         transporter: index === 0 ? entry.transporter || "" : "",
         transporterDetails: index === 0 ? entry.transporterDetails || "" : "",
