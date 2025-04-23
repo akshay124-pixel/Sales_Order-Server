@@ -55,7 +55,7 @@ const orderSchema = new mongoose.Schema(
     neftTransactionId: { type: String, trim: true },
     chequeId: { type: String, trim: true },
     paymentTerms: { type: String, trim: true },
-    amount2: { type: Number, default: 0, min: 0 },
+
     freightcs: { type: String, trim: true },
     orderType: {
       type: String,

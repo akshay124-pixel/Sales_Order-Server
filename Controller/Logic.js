@@ -30,7 +30,7 @@ const createOrder = async (req, res) => {
       customername,
       products,
       orderType,
-      amount2,
+
       freightcs,
       installation,
       salesPerson,
@@ -118,9 +118,7 @@ const createOrder = async (req, res) => {
             Number(product.unitPrice) *
             Number(product.qty),
         0
-      ) +
-      Number(amount2 || 0) +
-      Number(freightcs || 0);
+      ) + Number(freightcs || 0);
 
     const calculatedPaymentDue =
       calculatedTotal - Number(paymentCollected || 0);
@@ -139,7 +137,7 @@ const createOrder = async (req, res) => {
       customerEmail,
       customername,
       products,
-      amount2: Number(amount2 || 0),
+
       freightcs,
       installation,
       salesPerson,
@@ -203,7 +201,7 @@ const editEntry = async (req, res) => {
       neftTransactionId,
       chequeId,
       paymentTerms,
-      amount2,
+
       freightcs,
       orderType,
       installation,
@@ -387,11 +385,6 @@ const editEntry = async (req, res) => {
 
     if (paymentTerms !== undefined) {
       updateData.paymentTerms = paymentTerms?.trim() || null;
-    }
-
-    if (amount2 !== undefined) {
-      updateData.amount2 =
-        amount2 !== undefined && !isNaN(amount2) ? Number(amount2) : 0;
     }
 
     if (freightcs !== undefined) {
@@ -692,7 +685,6 @@ const bulkUploadOrders = async (req, res) => {
           (sum, p) => sum + p.qty * p.unitPrice * (1 + p.gst / 100),
           0
         ) +
-        Number(entry.amount2 || 0) +
         (entry.freightcs && !isNaN(Number(entry.freightcs))
           ? Number(entry.freightcs)
           : 0);
@@ -720,7 +712,7 @@ const bulkUploadOrders = async (req, res) => {
         neftTransactionId: String(entry.neftTransactionId || "").trim(),
         chequeId: String(entry.chequeId || "").trim(),
         paymentTerms: String(entry.paymentTerms || "").trim(),
-        amount2: Number(entry.amount2 || 0),
+
         freightcs: String(entry.freightcs || "").trim(),
         orderType: String(entry.orderType || "Private order").trim(),
         installation: String(entry.installation || "N/A").trim(),
@@ -858,7 +850,7 @@ const exportentry = async (req, res) => {
         neftTransactionId: index === 0 ? entry.neftTransactionId || "" : "",
         chequeId: index === 0 ? entry.chequeId || "" : "",
         paymentTerms: index === 0 ? entry.paymentTerms || "" : "",
-        amount2: index === 0 ? entry.amount2 || 0 : "",
+
         freightcs: index === 0 ? entry.freightcs || "" : "",
         orderType: index === 0 ? entry.orderType || "Private order" : "",
         installation: index === 0 ? entry.installation || "N/A" : "",
