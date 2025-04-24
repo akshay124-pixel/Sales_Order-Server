@@ -20,23 +20,12 @@ const orderSchema = new mongoose.Schema(
   {
     orderId: { type: String, unique: true },
     soDate: { type: Date, required: true },
-    committedDate: { type: Date },
+
     dispatchFrom: { type: String, trim: true },
-    status: {
-      type: String,
-      enum: [
-        "Pending",
-        "Delivered",
-        "Hold",
-        "Order Canceled",
-        "Dispatched",
-        "In Transit",
-      ],
-      default: "Pending",
-    },
+
     dispatchDate: { type: Date },
     name: { type: String, trim: true },
-    partyAndAddress: { type: String, trim: true },
+
     city: { type: String, trim: true },
     state: { type: String, trim: true },
     pinCode: { type: String, trim: true },

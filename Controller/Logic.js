@@ -18,10 +18,9 @@ const createOrder = async (req, res) => {
   try {
     const {
       soDate,
-      committedDate,
-      status,
+
       name,
-      partyAndAddress,
+
       city,
       state,
       pinCode,
@@ -128,10 +127,9 @@ const createOrder = async (req, res) => {
     // Create new order
     const order = new Order({
       soDate: new Date(soDate),
-      committedDate: committedDate ? new Date(committedDate) : null,
-      status,
+
       name,
-      partyAndAddress,
+
       city,
       state,
       pinCode,
@@ -184,12 +182,12 @@ const editEntry = async (req, res) => {
   try {
     const {
       soDate,
-      committedDate,
+
       dispatchFrom,
-      status,
+
       dispatchDate,
       name,
-      partyAndAddress,
+
       city,
       state,
       pinCode,
@@ -262,16 +260,8 @@ const editEntry = async (req, res) => {
       updateData.soDate = parsedDate;
     }
 
-    if (committedDate !== undefined) {
-      updateData.committedDate = committedDate ? new Date(committedDate) : null;
-    }
-
     if (dispatchFrom !== undefined) {
       updateData.dispatchFrom = dispatchFrom?.trim() || null;
-    }
-
-    if (status !== undefined) {
-      updateData.status = status?.trim() || order.status;
     }
 
     if (dispatchDate !== undefined) {
@@ -699,12 +689,12 @@ const bulkUploadOrders = async (req, res) => {
       return {
         orderId: `PMTO${startSequence + index}`,
         soDate: parsedSoDate,
-        committedDate: parseDate(entry.committedDate) || null,
+
         dispatchFrom: String(entry.dispatchFrom || "").trim(),
-        status: String(entry.status || "Pending").trim(),
+
         dispatchDate: parseDate(entry.dispatchDate) || null,
         name: String(entry.name || "").trim(),
-        partyAndAddress: String(entry.partyAndAddress || "").trim(),
+
         city: String(entry.city || "").trim(),
         state: String(entry.state || "").trim(),
         pinCode: String(entry.pinCode || "").trim(),
@@ -823,16 +813,14 @@ const exportentry = async (req, res) => {
         soDate: entry.soDate
           ? new Date(entry.soDate).toISOString().slice(0, 10)
           : "",
-        committedDate: entry.committedDate
-          ? new Date(entry.committedDate).toISOString().slice(0, 10)
-          : "",
+
         dispatchFrom: entry.dispatchFrom || "",
-        status: entry.status || "Pending",
+
         dispatchDate: entry.dispatchDate
           ? new Date(entry.dispatchDate).toISOString().slice(0, 10)
           : "",
         name: entry.name || "",
-        partyAndAddress: entry.partyAndAddress || "",
+
         city: entry.city || "",
         state: entry.state || "",
         pinCode: entry.pinCode || "",
