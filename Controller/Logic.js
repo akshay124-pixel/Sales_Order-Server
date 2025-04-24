@@ -298,15 +298,7 @@ const editEntry = async (req, res) => {
             `Product ${index + 1}: Quantity must be a positive number`
           );
         }
-        if (
-          p.unitPrice === undefined ||
-          isNaN(p.unitPrice) ||
-          p.unitPrice < 0
-        ) {
-          throw new Error(
-            `Product ${index + 1}: Unit Price must be a non-negative number`
-          );
-        }
+
         return {
           productType: p.productType.trim(),
           size: p.size?.trim() || "N/A",
