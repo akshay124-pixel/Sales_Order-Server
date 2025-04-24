@@ -76,23 +76,14 @@ const createOrder = async (req, res) => {
 
     // Validate product data
     for (const product of products) {
-      if (
-        !product.productType ||
-        !product.qty ||
-        !product.unitPrice ||
-        product.gst === undefined
-      ) {
+      if (!product.productType || !product.qty) {
         return res.status(400).json({
           error: "Invalid product data",
           details:
             "Each product must have productType, qty, unitPrice, and gst",
         });
       }
-      if (
-        isNaN(Number(product.qty)) ||
-        isNaN(Number(product.unitPrice)) ||
-        isNaN(Number(product.gst))
-      ) {
+      if (isNaN(Number(product.qty)) || isNaN(Number(product.gst))) {
         return res.status(400).json({
           error: "Invalid product data",
           details: "qty, unitPrice, and gst must be valid numbers",
