@@ -260,10 +260,6 @@ const editEntry = async (req, res) => {
       updateData.name = name?.trim() || null;
     }
 
-    if (partyAndAddress !== undefined) {
-      updateData.partyAndAddress = partyAndAddress?.trim() || null;
-    }
-
     if (city !== undefined) {
       updateData.city = city?.trim() || null;
     }
