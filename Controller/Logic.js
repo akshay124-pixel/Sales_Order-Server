@@ -18,9 +18,7 @@ const createOrder = async (req, res) => {
   try {
     const {
       soDate,
-
       name,
-
       city,
       state,
       pinCode,
@@ -192,7 +190,6 @@ const editEntry = async (req, res) => {
       paymentDue,
       neftTransactionId,
       chequeId,
-      paymentTerms,
 
       freightcs,
       orderType,
@@ -366,10 +363,6 @@ const editEntry = async (req, res) => {
 
     if (chequeId !== undefined) {
       updateData.chequeId = chequeId?.trim() || null;
-    }
-
-    if (paymentTerms !== undefined) {
-      updateData.paymentTerms = paymentTerms?.trim() || null;
     }
 
     if (freightcs !== undefined) {
@@ -699,7 +692,6 @@ const bulkUploadOrders = async (req, res) => {
         paymentDue: String(entry.paymentDue || "").trim(),
         neftTransactionId: String(entry.neftTransactionId || "").trim(),
         chequeId: String(entry.chequeId || "").trim(),
-        paymentTerms: String(entry.paymentTerms || "").trim(),
 
         freightcs: String(entry.freightcs || "").trim(),
         orderType: String(entry.orderType || "Private").trim(),
@@ -836,7 +828,6 @@ const exportentry = async (req, res) => {
         paymentDue: index === 0 ? entry.paymentDue || "" : "",
         neftTransactionId: index === 0 ? entry.neftTransactionId || "" : "",
         chequeId: index === 0 ? entry.chequeId || "" : "",
-        paymentTerms: index === 0 ? entry.paymentTerms || "" : "",
 
         freightcs: index === 0 ? entry.freightcs || "" : "",
         orderType: index === 0 ? entry.orderType || "Private" : "",
