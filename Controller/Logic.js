@@ -171,12 +171,9 @@ const editEntry = async (req, res) => {
   try {
     const {
       soDate,
-
       dispatchFrom,
-
       dispatchDate,
       name,
-
       city,
       state,
       pinCode,
@@ -190,7 +187,6 @@ const editEntry = async (req, res) => {
       paymentDue,
       neftTransactionId,
       chequeId,
-
       freightcs,
       orderType,
       installation,
@@ -219,13 +215,6 @@ const editEntry = async (req, res) => {
       sostatus,
     } = req.body;
 
-    // Validate ObjectId
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid order ID" });
-    }
-
     // Find existing order
     const order = await Order.findById(req.params.id);
     if (!order) {
@@ -239,13 +228,7 @@ const editEntry = async (req, res) => {
 
     // Handle fields only if provided (partial updates)
     if (soDate !== undefined) {
-      const parsedDate = new Date(soDate);
-      if (isNaN(parsedDate.getTime())) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid SO Date" });
-      }
-      updateData.soDate = parsedDate;
+      updateData.soDate = soDate ? new Date(soDate) : null;
     }
 
     if (dispatchFrom !== undefined) {
@@ -285,40 +268,24 @@ const editEntry = async (req, res) => {
     }
 
     if (products !== undefined) {
-      updateData.products = products.map((p, index) => {
-        if (!p.productType?.trim()) {
-          throw new Error(`Product ${index + 1}: Product Type is required`);
-        }
-        if (p.qty === undefined || isNaN(p.qty) || Number(p.qty) <= 0) {
-          throw new Error(
-            `Product ${index + 1}: Quantity must be a positive number`
-          );
-        }
-
-        return {
-          productType: p.productType.trim(),
-          size: p.size?.trim() || "N/A",
-          spec: p.spec?.trim() || "N/A",
-          qty: Number(p.qty),
-          unitPrice: Number(p.unitPrice),
-          serialNos: Array.isArray(p.serialNos)
-            ? p.serialNos.map((s) => s.trim()).filter(Boolean)
-            : [],
-          modelNos: Array.isArray(p.modelNos)
-            ? p.modelNos.map((m) => m.trim()).filter(Boolean)
-            : [],
-          gst: p.gst !== undefined && !isNaN(p.gst) ? Number(p.gst) : 0,
-        };
-      });
+      updateData.products = products.map((p) => ({
+        productType: p.productType?.trim() || "",
+        size: p.size?.trim() || "N/A",
+        spec: p.spec?.trim() || "N/A",
+        qty: p.qty !== undefined ? Number(p.qty) : 0,
+        unitPrice: p.unitPrice !== undefined ? Number(p.unitPrice) : 0,
+        serialNos: Array.isArray(p.serialNos)
+          ? p.serialNos.map((s) => s.trim()).filter(Boolean)
+          : [],
+        modelNos: Array.isArray(p.modelNos)
+          ? p.modelNos.map((m) => m.trim()).filter(Boolean)
+          : [],
+        gst: p.gst !== undefined ? Number(p.gst) : 0,
+      }));
     }
 
     if (total !== undefined) {
-      if (isNaN(total) || total <= 0) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Total must be a positive number" });
-      }
-      updateData.total = Number(total);
+      updateData.total = total !== undefined ? Number(total) : 0;
     }
 
     if (paymentCollected !== undefined) {
@@ -329,12 +296,6 @@ const editEntry = async (req, res) => {
     }
 
     if (paymentMethod !== undefined) {
-      const validMethods = ["Cash", "NEFT", "RTGS", "Cheque", ""];
-      if (paymentMethod && !validMethods.includes(paymentMethod.trim())) {
-        return res
-          .status(400)
-          .json({ success: false, message: "Invalid Payment Method" });
-      }
       updateData.paymentMethod = paymentMethod?.trim() || "";
     }
 
@@ -382,6 +343,7 @@ const editEntry = async (req, res) => {
     if (salesPerson !== undefined) {
       updateData.salesPerson = salesPerson?.trim() || null;
     }
+
     if (report !== undefined) {
       updateData.report = report?.trim() || null;
     }
@@ -463,21 +425,6 @@ const editEntry = async (req, res) => {
       updateData.sostatus = sostatus?.trim() || order.sostatus;
     }
 
-    // Additional validations
-    if (updateData.paymentMethod === "NEFT" && !updateData.neftTransactionId) {
-      return res.status(400).json({
-        success: false,
-        message: "NEFT Transaction ID is required for NEFT payments",
-      });
-    }
-
-    if (updateData.paymentMethod === "Cheque" && !updateData.chequeId) {
-      return res.status(400).json({
-        success: false,
-        message: "Cheque ID is required for Cheque payments",
-      });
-    }
-
     // Automatic completion status update
     if (
       updateData.fulfillingStatus === "Fulfilled" &&
@@ -491,7 +438,7 @@ const editEntry = async (req, res) => {
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
-      { new: true, runValidators: true }
+      { new: true }
     ).lean();
 
     if (!updatedOrder) {
@@ -507,20 +454,6 @@ const editEntry = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in editEntry:", error.stack);
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({
-        success: false,
-        message: "Validation failed",
-        errors: messages,
-      });
-    }
-    if (error.message.includes("Product")) {
-      return res.status(400).json({
-        success: false,
-        message: error.message,
-      });
-    }
     res.status(500).json({
       success: false,
       message: "Error updating order",
