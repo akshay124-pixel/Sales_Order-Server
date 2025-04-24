@@ -10,7 +10,7 @@ const productSchema = new mongoose.Schema({
   size: { type: String, default: "N/A", trim: true },
   spec: { type: String, default: "N/A", trim: true },
   qty: { type: Number, required: true, min: 1 },
-  unitPrice: { type: Number, required: true, min: 0 },
+  unitPrice: { type: Number, required: true },
   serialNos: [{ type: String, trim: true }],
   modelNos: [{ type: String, trim: true }],
   gst: { type: Number, default: 0, min: 0, max: 100 },
