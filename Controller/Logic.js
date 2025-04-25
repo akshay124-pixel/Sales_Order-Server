@@ -822,7 +822,6 @@ const getProductionOrders = async (req, res) => {
     const orders = await Order.find({
       sostatus: "Approved",
       completionStatus: { $ne: "Complete" },
-      fulfillingStatus: { $ne: "Partial Dispatch" },
     }).lean();
 
     res.status(200).json({ success: true, data: orders });
