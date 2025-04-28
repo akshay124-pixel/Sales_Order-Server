@@ -30,6 +30,7 @@ const orderSchema = new mongoose.Schema(
     state: { type: String, trim: true },
     pinCode: { type: String, trim: true },
     contactNo: { type: String, trim: true },
+    alterno: { type: String, trim: true },
     customerEmail: { type: String, trim: true },
     customername: { type: String, trim: true },
     products: [productSchema],

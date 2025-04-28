@@ -23,6 +23,7 @@ const createOrder = async (req, res) => {
       state,
       pinCode,
       contactNo,
+      alterno,
       customerEmail,
       customername,
       products,
@@ -123,6 +124,7 @@ const createOrder = async (req, res) => {
       state,
       pinCode,
       contactNo,
+      alterno,
       customerEmail,
       customername,
       products,
@@ -178,6 +180,7 @@ const editEntry = async (req, res) => {
       state,
       pinCode,
       contactNo,
+      alterno,
       customerEmail,
       customername,
       products,
@@ -257,6 +260,9 @@ const editEntry = async (req, res) => {
 
     if (contactNo !== undefined) {
       updateData.contactNo = contactNo?.trim() || null;
+    }
+    if (alterno !== undefined) {
+      updateData.alterno = alterno?.trim() || null;
     }
 
     if (customerEmail !== undefined) {
@@ -604,6 +610,7 @@ const bulkUploadOrders = async (req, res) => {
         state: String(entry.state || "").trim(),
         pinCode: String(entry.pinCode || "").trim(),
         contactNo: String(entry.contactNo || "").trim(),
+        alterno: String(entry.alterno || "").trim(),
         customerEmail: String(entry.customerEmail || "").trim(),
         customername: String(entry.customername || "").trim(),
         products,
@@ -729,6 +736,7 @@ const exportentry = async (req, res) => {
         state: entry.state || "",
         pinCode: entry.pinCode || "",
         contactNo: entry.contactNo || "",
+        alternoo: entry.alterno || "",
         customerEmail: entry.customerEmail || "",
         customername: entry.customername || "",
         productType: product.productType || "",
