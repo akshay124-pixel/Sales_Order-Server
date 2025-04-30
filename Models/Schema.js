@@ -20,9 +20,7 @@ const orderSchema = new mongoose.Schema(
   {
     orderId: { type: String, unique: true },
     soDate: { type: Date, required: true },
-
     dispatchFrom: { type: String, trim: true },
-
     dispatchDate: { type: Date },
     name: { type: String, trim: true },
     gstno: { type: String, trim: true },
@@ -45,7 +43,6 @@ const orderSchema = new mongoose.Schema(
     neftTransactionId: { type: String, trim: true },
     chequeId: { type: String, trim: true },
     paymentTerms: { type: String, trim: true },
-
     freightcs: { type: String, trim: true },
     freightstatus: {
       type: String,
@@ -55,7 +52,7 @@ const orderSchema = new mongoose.Schema(
     orderType: {
       type: String,
       enum: ["GEM", "Goverment", "Private", "Demo", "Replacement", "repair"],
-      default: "Private order",
+      default: "Private",
     },
     installation: { type: String, default: "N/A", trim: true },
     installationStatus: {
@@ -110,6 +107,11 @@ const orderSchema = new mongoose.Schema(
       enum: ["Pending for Approval", "Approved"],
       default: "Pending for Approval",
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
   },
   { timestamps: true }
 );
@@ -117,6 +119,7 @@ const orderSchema = new mongoose.Schema(
 // Indexes for performance
 orderSchema.index({ orderId: 1 });
 orderSchema.index({ soDate: 1 });
+orderSchema.index({ createdBy: 1 });
 
 // Auto-generate orderId for new orders
 orderSchema.pre("save", async function (next) {

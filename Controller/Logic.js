@@ -4,15 +4,29 @@ const XLSX = require("xlsx");
 
 const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
+    const { role, id } = req.user; // Extract role and user ID from JWT
+    let orders;
+
+    if (role === "Admin") {
+      // Admin sees all orders
+      orders = await Order.find().populate("createdBy", "username email");
+    } else if (role === "Sales") {
+      // Sales sees only their own orders
+      orders = await Order.find({ createdBy: id }).populate(
+        "createdBy",
+        "username email"
+      );
+    } else {
+      // Other roles (Production, Installation, etc.) see orders based on existing logic
+      orders = await Order.find().populate("createdBy", "username email");
+    }
+
     res.json(orders);
   } catch (error) {
     console.error("Error in getAllOrders:", error.message);
     res.status(500).json({ error: "Server error" });
   }
 };
-
-// Create a new order
 
 const createOrder = async (req, res) => {
   try {
@@ -50,7 +64,7 @@ const createOrder = async (req, res) => {
     if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({
         error: "Missing required fields",
-        details: "At least one product are required",
+        details: "At least one product is required",
       });
     }
 
@@ -71,20 +85,22 @@ const createOrder = async (req, res) => {
 
     // Validate product data
     for (const product of products) {
-      if (!product.productType || !product.qty) {
+      if (!product.productType || !product.qty || !product.unitPrice) {
         return res.status(400).json({
           error: "Invalid product data",
-          details:
-            "Each product must have productType, qty, unitPrice, and gst",
+          details: "Each product must have productType, qty, and unitPrice",
         });
       }
-      if (isNaN(Number(product.qty)) || isNaN(Number(product.gst))) {
+      if (
+        isNaN(Number(product.qty)) ||
+        isNaN(Number(product.unitPrice)) ||
+        isNaN(Number(product.gst))
+      ) {
         return res.status(400).json({
           error: "Invalid product data",
           details: "qty, unitPrice, and gst must be valid numbers",
         });
       }
-      // Ensure serialNos and modelNos are arrays
       product.serialNos = Array.isArray(product.serialNos)
         ? product.serialNos
         : [];
@@ -110,12 +126,10 @@ const createOrder = async (req, res) => {
     const calculatedPaymentDue =
       calculatedTotal - Number(paymentCollected || 0);
 
-    // Create new order
+    // Create new order with createdBy
     const order = new Order({
       soDate: new Date(),
-
       name,
-
       city,
       state,
       pinCode,
@@ -129,7 +143,6 @@ const createOrder = async (req, res) => {
       freightstatus,
       installation,
       report,
-
       salesPerson,
       company,
       orderType,
@@ -147,6 +160,7 @@ const createOrder = async (req, res) => {
       neftTransactionId: neftTransactionId || "",
       chequeId: chequeId || "",
       remarks,
+      createdBy: req.user.id, // Set createdBy to the logged-in user
     });
 
     await order.validate();
@@ -164,8 +178,6 @@ const createOrder = async (req, res) => {
     res.status(500).json({ error: "Server error", details: error.message });
   }
 };
-
-// Edit an order
 
 const editEntry = async (req, res) => {
   try {
@@ -218,7 +230,6 @@ const editEntry = async (req, res) => {
       sostatus,
     } = req.body;
 
-    // Find existing order
     const order = await Order.findById(req.params.id);
     if (!order) {
       return res
@@ -226,53 +237,51 @@ const editEntry = async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    // Prepare update data
+    // Restrict editing for Sales users to their own orders
+    if (
+      req.user.role === "Sales" &&
+      order.createdBy.toString() !== req.user.id
+    ) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Unauthorized to edit this order" });
+    }
+
     const updateData = {};
 
-    // Handle fields only if provided (partial updates)
     if (soDate !== undefined) {
       updateData.soDate = soDate ? new Date(soDate) : null;
     }
-
     if (dispatchFrom !== undefined) {
       updateData.dispatchFrom = dispatchFrom?.trim() || null;
     }
-
     if (dispatchDate !== undefined) {
       updateData.dispatchDate = dispatchDate ? new Date(dispatchDate) : null;
     }
-
     if (name !== undefined) {
       updateData.name = name?.trim() || null;
     }
-
     if (city !== undefined) {
       updateData.city = city?.trim() || null;
     }
-
     if (state !== undefined) {
       updateData.state = state?.trim() || null;
     }
-
     if (pinCode !== undefined) {
       updateData.pinCode = pinCode?.trim() || null;
     }
-
     if (contactNo !== undefined) {
       updateData.contactNo = contactNo?.trim() || null;
     }
     if (alterno !== undefined) {
       updateData.alterno = alterno?.trim() || null;
     }
-
     if (customerEmail !== undefined) {
       updateData.customerEmail = customerEmail?.trim() || null;
     }
-
     if (customername !== undefined) {
       updateData.customername = customername?.trim() || null;
     }
-
     if (products !== undefined) {
       updateData.products = products.map((p) => ({
         productType: p.productType?.trim() || "",
@@ -289,155 +298,122 @@ const editEntry = async (req, res) => {
         gst: p.gst !== undefined ? Number(p.gst) : 0,
       }));
     }
-
     if (total !== undefined) {
       updateData.total = total !== undefined ? Number(total) : 0;
     }
-
     if (paymentCollected !== undefined) {
       updateData.paymentCollected =
         paymentCollected !== "" && paymentCollected !== null
           ? String(paymentCollected).trim()
           : null;
     }
-
     if (paymentMethod !== undefined) {
       updateData.paymentMethod = paymentMethod?.trim() || "";
     }
-
     if (paymentDue !== undefined) {
       updateData.paymentDue =
         paymentDue !== "" && paymentDue !== null
           ? String(paymentDue).trim()
           : null;
     }
-
     if (neftTransactionId !== undefined) {
       updateData.neftTransactionId = neftTransactionId?.trim() || null;
     }
-
     if (chequeId !== undefined) {
       updateData.chequeId = chequeId?.trim() || null;
     }
-
     if (freightcs !== undefined) {
       updateData.freightcs = freightcs?.trim() || null;
     }
     if (freightstatus !== undefined) {
-      updateData.freightstatus = freightstatus.trim() || null;
+      updateData.freightstatus = freightstatus?.trim() || null;
     }
     if (gstno !== undefined) {
       updateData.gstno = gstno?.trim() || null;
     }
-
     if (orderType !== undefined) {
       updateData.orderType = orderType?.trim() || order.orderType;
     }
-
     if (installation !== undefined) {
       updateData.installation = installation?.trim() || "N/A";
     }
-
     if (installationStatus !== undefined) {
       updateData.installationStatus =
         installationStatus?.trim() || order.installationStatus;
     }
-
     if (remarksByInstallation !== undefined) {
       updateData.remarksByInstallation = remarksByInstallation?.trim() || "";
     }
-
     if (dispatchStatus !== undefined) {
       updateData.dispatchStatus =
         dispatchStatus?.trim() || order.dispatchStatus;
     }
-
     if (salesPerson !== undefined) {
       updateData.salesPerson = salesPerson?.trim() || null;
     }
-
     if (report !== undefined) {
       updateData.report = report?.trim() || null;
     }
-
     if (company !== undefined) {
       updateData.company = company?.trim() || order.company;
     }
-
     if (transporter !== undefined) {
       updateData.transporter = transporter?.trim() || null;
     }
-
     if (transporterDetails !== undefined) {
       updateData.transporterDetails = transporterDetails?.trim() || null;
     }
-
     if (docketNo !== undefined) {
       updateData.docketNo = docketNo?.trim() || null;
     }
-
     if (receiptDate !== undefined) {
       updateData.receiptDate = receiptDate ? new Date(receiptDate) : null;
     }
-
     if (shippingAddress !== undefined) {
       updateData.shippingAddress = shippingAddress?.trim() || "";
     }
-
     if (billingAddress !== undefined) {
       updateData.billingAddress = billingAddress?.trim() || "";
     }
-
     if (invoiceNo !== undefined) {
       updateData.invoiceNo = invoiceNo?.trim() || null;
     }
-
     if (invoiceDate !== undefined) {
       updateData.invoiceDate = invoiceDate ? new Date(invoiceDate) : null;
     }
-
     if (fulfillingStatus !== undefined) {
       updateData.fulfillingStatus =
         fulfillingStatus?.trim() || order.fulfillingStatus;
     }
-
     if (remarksByProduction !== undefined) {
       updateData.remarksByProduction = remarksByProduction?.trim() || null;
     }
-
     if (remarksByAccounts !== undefined) {
       updateData.remarksByAccounts = remarksByAccounts?.trim() || null;
     }
-
     if (paymentReceived !== undefined) {
       updateData.paymentReceived =
         paymentReceived?.trim() || order.paymentReceived;
     }
-
     if (billNumber !== undefined) {
       updateData.billNumber = billNumber?.trim() || null;
     }
-
     if (completionStatus !== undefined) {
       updateData.completionStatus =
         completionStatus?.trim() || order.completionStatus;
     }
-
     if (fulfillmentDate !== undefined) {
       updateData.fulfillmentDate = fulfillmentDate
         ? new Date(fulfillmentDate)
         : null;
     }
-
     if (remarks !== undefined) {
       updateData.remarks = remarks?.trim() || null;
     }
-
     if (sostatus !== undefined) {
       updateData.sostatus = sostatus?.trim() || order.sostatus;
     }
 
-    // Automatic completion status update
     if (
       updateData.fulfillingStatus === "Fulfilled" &&
       order.fulfillingStatus !== "Fulfilled"
@@ -446,7 +422,6 @@ const editEntry = async (req, res) => {
       updateData.fulfillmentDate = updateData.fulfillmentDate || new Date();
     }
 
-    // Update order
     const updatedOrder = await Order.findByIdAndUpdate(
       req.params.id,
       { $set: updateData },
@@ -473,7 +448,7 @@ const editEntry = async (req, res) => {
     });
   }
 };
-// Delete an order
+
 const DeleteData = async (req, res) => {
   try {
     console.log("Delete request received for ID:", req.params.id);
@@ -485,7 +460,6 @@ const DeleteData = async (req, res) => {
         .json({ success: false, message: "Invalid order ID" });
     }
 
-    console.log("Fetching order with ID:", req.params.id);
     const order = await Order.findById(req.params.id);
     if (!order) {
       console.log("Order not found for ID:", req.params.id);
@@ -494,7 +468,16 @@ const DeleteData = async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    console.log("Deleting order with ID:", req.params.id);
+    // Restrict deletion for Sales users to their own orders
+    if (
+      req.user.role === "Sales" &&
+      order.createdBy.toString() !== req.user.id
+    ) {
+      return res
+        .status(403)
+        .json({ success: false, message: "Unauthorized to delete this order" });
+    }
+
     await Order.findByIdAndDelete(req.params.id);
     console.log("Order deleted successfully for ID:", req.params.id);
 
@@ -515,7 +498,6 @@ const DeleteData = async (req, res) => {
   }
 };
 
-// Export orders to XLSX
 const parseDate = (dateStr) => {
   if (!dateStr) return null;
   const date = new Date(String(dateStr).trim());
@@ -534,7 +516,6 @@ const bulkUploadOrders = async (req, res) => {
       });
     }
 
-    // Increment counter for orderIds
     const counter = await Counter.findByIdAndUpdate(
       { _id: "orderId" },
       { $inc: { sequence: newEntries.length } },
@@ -548,7 +529,6 @@ const bulkUploadOrders = async (req, res) => {
         JSON.stringify(entry, null, 2)
       );
 
-      // Handle products (default to a single product if none provided)
       let products = [];
       if (Array.isArray(entry.products) && entry.products.length > 0) {
         products = entry.products.map((p) => ({
@@ -590,10 +570,8 @@ const bulkUploadOrders = async (req, res) => {
         });
       }
 
-      // Use current date if soDate is missing or invalid
       const parsedSoDate = parseDate(entry.soDate) || new Date();
 
-      // Calculate total if not provided or invalid
       const calculatedTotal =
         products.reduce(
           (sum, p) => sum + p.qty * p.unitPrice * (1 + p.gst / 100),
@@ -606,12 +584,9 @@ const bulkUploadOrders = async (req, res) => {
       return {
         orderId: `PMTO${startSequence + index}`,
         soDate: parsedSoDate,
-
         dispatchFrom: String(entry.dispatchFrom || "").trim(),
-
         dispatchDate: parseDate(entry.dispatchDate) || null,
         name: String(entry.name || "").trim(),
-
         city: String(entry.city || "").trim(),
         state: String(entry.state || "").trim(),
         pinCode: String(entry.pinCode || "").trim(),
@@ -628,9 +603,7 @@ const bulkUploadOrders = async (req, res) => {
         chequeId: String(entry.chequeId || "").trim(),
         gstno: String(entry.gstno || "").trim(),
         freightcs: String(entry.freightcs || "").trim(),
-
         freightstatus: String(entry.freightstatus || "").trim(),
-
         orderType: String(entry.orderType || "Private").trim(),
         installation: String(entry.installation || "N/A").trim(),
         installationStatus: String(
@@ -660,6 +633,7 @@ const bulkUploadOrders = async (req, res) => {
         fulfillmentDate: parseDate(entry.fulfillmentDate) || null,
         remarks: String(entry.remarks || "").trim(),
         sostatus: String(entry.sostatus || "Pending for Approval").trim(),
+        createdBy: req.user.id, // Set createdBy for bulk uploads
       };
     });
 
@@ -689,7 +663,16 @@ const bulkUploadOrders = async (req, res) => {
 
 const exportentry = async (req, res) => {
   try {
-    const orders = await Order.find().lean();
+    const { role, id } = req.user;
+    let orders;
+
+    if (role === "Admin") {
+      orders = await Order.find().lean();
+    } else if (role === "Sales") {
+      orders = await Order.find({ createdBy: id }).lean();
+    } else {
+      orders = await Order.find().lean();
+    }
 
     if (!Array.isArray(orders) || orders.length === 0) {
       console.warn("No orders found.");
@@ -733,14 +716,11 @@ const exportentry = async (req, res) => {
         soDate: entry.soDate
           ? new Date(entry.soDate).toISOString().slice(0, 10)
           : "",
-
         dispatchFrom: entry.dispatchFrom || "",
-
         dispatchDate: entry.dispatchDate
           ? new Date(entry.dispatchDate).toISOString().slice(0, 10)
           : "",
         name: entry.name || "",
-
         city: entry.city || "",
         state: entry.state || "",
         pinCode: entry.pinCode || "",
@@ -766,11 +746,8 @@ const exportentry = async (req, res) => {
         paymentDue: index === 0 ? entry.paymentDue || "" : "",
         neftTransactionId: index === 0 ? entry.neftTransactionId || "" : "",
         chequeId: index === 0 ? entry.chequeId || "" : "",
-
         freightcs: index === 0 ? entry.freightcs || "" : "",
-
         freightstatus: index === 0 ? entry.freightstatus || "" : "",
-
         gstno: index === 0 ? entry.gstno || "" : "",
         orderType: index === 0 ? entry.orderType || "Private" : "",
         installation: index === 0 ? entry.installation || "N/A" : "",
@@ -837,14 +814,13 @@ const exportentry = async (req, res) => {
     });
   }
 };
-// Get production orders
+
 const getProductionOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       sostatus: "Approved",
       completionStatus: { $ne: "Complete" },
     }).lean();
-
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
     console.error("Error in getProductionOrders:", error.message);
@@ -856,7 +832,6 @@ const getProductionOrders = async (req, res) => {
   }
 };
 
-// Get finished goods orders
 const getFinishedGoodsOrders = async (req, res) => {
   try {
     const orders = await Order.find({
@@ -866,7 +841,7 @@ const getFinishedGoodsOrders = async (req, res) => {
       ],
       dispatchStatus: {
         $in: ["Not Dispatched", "Docket Awaited Dispatched", "Dispatched"],
-      }, // Include all statuses except "Delivered"
+      },
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
@@ -879,11 +854,10 @@ const getFinishedGoodsOrders = async (req, res) => {
   }
 };
 
-// Get installation orders
 const getInstallationOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      dispatchStatus: "Delivered", // Only "Delivered" orders move here
+      dispatchStatus: "Delivered",
       installationStatus: { $ne: "Completed" },
     }).lean();
     res.status(200).json({ success: true, data: orders });
@@ -897,7 +871,6 @@ const getInstallationOrders = async (req, res) => {
   }
 };
 
-// Get accounts orders
 const getAccountsOrders = async (req, res) => {
   try {
     const orders = await Order.find({

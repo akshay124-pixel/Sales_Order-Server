@@ -1,26 +1,27 @@
 const express = require("express");
 const router = express.Router();
-const Controller = require("../Controller/Logic"); // Adjust path
+const Controller = require("../Controller/Logic");
 const checkProductionRole = require("../Middleware/middleware");
-// GET all orders
-router.get("/get-orders", Controller.getAllOrders);
-router.get("/installation-orders", Controller.getInstallationOrders);
-router.get("/accounts-orders", Controller.getAccountsOrders);
-// POST a new order
-router.post("/orders", Controller.createOrder);
+const { verifyToken } = require("../utils/config jwt");
 
-// DELETE an order by ID
-router.delete("/delete/:id", Controller.DeleteData); // Updated to use :id parameter
-
-// PUT to edit an order
-router.put("/edit/:id", Controller.editEntry);
-router.get("/export", Controller.exportentry);
-router.get("/export", Controller.exportentry);
-router.post("/bulk-orders", Controller.bulkUploadOrders);
+router.get("/get-orders", verifyToken, Controller.getAllOrders);
+router.get(
+  "/installation-orders",
+  verifyToken,
+  Controller.getInstallationOrders
+);
+router.get("/accounts-orders", verifyToken, Controller.getAccountsOrders);
+router.post("/orders", verifyToken, Controller.createOrder);
+router.delete("/delete/:id", verifyToken, Controller.DeleteData);
+router.put("/edit/:id", verifyToken, Controller.editEntry);
+router.get("/export", verifyToken, Controller.exportentry);
+router.post("/bulk-orders", verifyToken, Controller.bulkUploadOrders);
 router.get(
   "/production-orders",
+  verifyToken,
   checkProductionRole,
   Controller.getProductionOrders
 );
-router.get("/finished-goods", Controller.getFinishedGoodsOrders);
+router.get("/finished-goods", verifyToken, Controller.getFinishedGoodsOrders);
+
 module.exports = router;
