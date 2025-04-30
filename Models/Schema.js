@@ -25,7 +25,7 @@ const orderSchema = new mongoose.Schema(
 
     dispatchDate: { type: Date },
     name: { type: String, trim: true },
-
+    gstno: { type: String, trim: true },
     city: { type: String, trim: true },
     state: { type: String, trim: true },
     pinCode: { type: String, trim: true },
@@ -47,6 +47,11 @@ const orderSchema = new mongoose.Schema(
     paymentTerms: { type: String, trim: true },
 
     freightcs: { type: String, trim: true },
+    freightstatus: {
+      type: String,
+      enum: ["To Pay", "Paid"],
+      default: "To Pay",
+    },
     orderType: {
       type: String,
       enum: ["GEM", "Goverment", "Private", "Demo", "Replacement", "repair"],
@@ -102,7 +107,7 @@ const orderSchema = new mongoose.Schema(
     remarks: { type: String, trim: true },
     sostatus: {
       type: String,
-      enum: ["Pending for Approval", "Accounts Approved", "Approved"],
+      enum: ["Pending for Approval", "Approved"],
       default: "Pending for Approval",
     },
   },

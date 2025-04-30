@@ -17,7 +17,6 @@ const getAllOrders = async (req, res) => {
 const createOrder = async (req, res) => {
   try {
     const {
-      soDate,
       name,
       city,
       state,
@@ -37,6 +36,8 @@ const createOrder = async (req, res) => {
       billingAddress,
       sameAddress,
       total,
+      gstno,
+      freightstatus,
       paymentCollected,
       paymentMethod,
       paymentDue,
@@ -46,15 +47,10 @@ const createOrder = async (req, res) => {
     } = req.body;
 
     // Validate required fields
-    if (
-      !soDate ||
-      !products ||
-      !Array.isArray(products) ||
-      products.length === 0
-    ) {
+    if (!products || !Array.isArray(products) || products.length === 0) {
       return res.status(400).json({
         error: "Missing required fields",
-        details: "soDate and at least one product are required",
+        details: "At least one product are required",
       });
     }
 
@@ -116,7 +112,7 @@ const createOrder = async (req, res) => {
 
     // Create new order
     const order = new Order({
-      soDate: new Date(soDate),
+      soDate: new Date(),
 
       name,
 
@@ -128,10 +124,12 @@ const createOrder = async (req, res) => {
       customerEmail,
       customername,
       products,
-
+      gstno,
       freightcs,
+      freightstatus,
       installation,
       report,
+
       salesPerson,
       company,
       orderType,
@@ -185,6 +183,8 @@ const editEntry = async (req, res) => {
       customername,
       products,
       total,
+      gstno,
+      freightstatus,
       paymentCollected,
       paymentMethod,
       paymentDue,
@@ -322,6 +322,12 @@ const editEntry = async (req, res) => {
 
     if (freightcs !== undefined) {
       updateData.freightcs = freightcs?.trim() || null;
+    }
+    if (freightstatus !== undefined) {
+      updateData.freightstatus = freightstatus.trim() || null;
+    }
+    if (gstno !== undefined) {
+      updateData.gstno = gstno?.trim() || null;
     }
 
     if (orderType !== undefined) {
@@ -620,8 +626,11 @@ const bulkUploadOrders = async (req, res) => {
         paymentDue: String(entry.paymentDue || "").trim(),
         neftTransactionId: String(entry.neftTransactionId || "").trim(),
         chequeId: String(entry.chequeId || "").trim(),
-
+        gstno: String(entry.gstno || "").trim(),
         freightcs: String(entry.freightcs || "").trim(),
+
+        freightstatus: String(entry.freightstatus || "").trim(),
+
         orderType: String(entry.orderType || "Private").trim(),
         installation: String(entry.installation || "N/A").trim(),
         installationStatus: String(
@@ -759,6 +768,10 @@ const exportentry = async (req, res) => {
         chequeId: index === 0 ? entry.chequeId || "" : "",
 
         freightcs: index === 0 ? entry.freightcs || "" : "",
+
+        freightstatus: index === 0 ? entry.freightstatus || "" : "",
+
+        gstno: index === 0 ? entry.gstno || "" : "",
         orderType: index === 0 ? entry.orderType || "Private" : "",
         installation: index === 0 ? entry.installation || "N/A" : "",
         installationStatus:
