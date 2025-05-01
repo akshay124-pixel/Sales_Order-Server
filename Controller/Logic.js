@@ -237,16 +237,6 @@ const editEntry = async (req, res) => {
         .json({ success: false, message: "Order not found" });
     }
 
-    // Restrict editing for Sales users to their own orders
-    if (
-      req.user.role === "Sales" &&
-      order.createdBy.toString() !== req.user.id
-    ) {
-      return res
-        .status(403)
-        .json({ success: false, message: "Unauthorized to edit this order" });
-    }
-
     const updateData = {};
 
     if (soDate !== undefined) {
@@ -283,20 +273,21 @@ const editEntry = async (req, res) => {
       updateData.customername = customername?.trim() || null;
     }
     if (products !== undefined) {
-      updateData.products = products.map((p) => ({
-        productType: p.productType?.trim() || "",
-        size: p.size?.trim() || "N/A",
-        spec: p.spec?.trim() || "N/A",
-        qty: p.qty !== undefined ? Number(p.qty) : 0,
-        unitPrice: p.unitPrice !== undefined ? Number(p.unitPrice) : 0,
-        serialNos: Array.isArray(p.serialNos)
-          ? p.serialNos.map((s) => s.trim()).filter(Boolean)
-          : [],
-        modelNos: Array.isArray(p.modelNos)
-          ? p.modelNos.map((m) => m.trim()).filter(Boolean)
-          : [],
-        gst: p.gst !== undefined ? Number(p.gst) : 0,
-      }));
+      updateData.products =
+        products?.map((p) => ({
+          productType: p.productType?.trim() || "",
+          size: p.size?.trim() || "N/A",
+          spec: p.spec?.trim() || "N/A",
+          qty: p.qty !== undefined ? Number(p.qty) : 0,
+          unitPrice: p.unitPrice !== undefined ? Number(p.unitPrice) : 0,
+          serialNos: Array.isArray(p.serialNos)
+            ? p.serialNos.map((s) => s.trim()).filter(Boolean)
+            : [],
+          modelNos: Array.isArray(p.modelNos)
+            ? p.modelNos.map((m) => m.trim()).filter(Boolean)
+            : [],
+          gst: p.gst !== undefined ? Number(p.gst) : 0,
+        })) || [];
     }
     if (total !== undefined) {
       updateData.total = total !== undefined ? Number(total) : 0;
