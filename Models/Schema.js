@@ -46,7 +46,12 @@ const orderSchema = new mongoose.Schema(
     freightcs: { type: String, trim: true },
     freightstatus: {
       type: String,
-      enum: ["To Pay", "Paid"],
+      enum: ["To Pay", "Including", "Extra"],
+      default: "To Pay",
+    },
+    installchargesstatus: {
+      type: String,
+      enum: ["To Pay", "Including", "Extra"],
       default: "To Pay",
     },
     orderType: {
@@ -88,6 +93,7 @@ const orderSchema = new mongoose.Schema(
     invoiceDate: { type: Date },
     fulfillingStatus: { type: String, default: "Pending", trim: true },
     remarksByProduction: { type: String, trim: true },
+
     remarksByAccounts: { type: String, trim: true },
     paymentReceived: {
       type: String,

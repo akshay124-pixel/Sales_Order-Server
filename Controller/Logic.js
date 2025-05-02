@@ -52,6 +52,7 @@ const createOrder = async (req, res) => {
       total,
       gstno,
       freightstatus,
+      installchargesstatus,
       paymentCollected,
       paymentMethod,
       paymentDue,
@@ -141,6 +142,7 @@ const createOrder = async (req, res) => {
       gstno,
       freightcs,
       freightstatus,
+      installchargesstatus,
       installation,
       report,
       salesPerson,
@@ -197,6 +199,7 @@ const editEntry = async (req, res) => {
       total,
       gstno,
       freightstatus,
+      installchargesstatus,
       paymentCollected,
       paymentMethod,
       paymentDue,
@@ -318,6 +321,9 @@ const editEntry = async (req, res) => {
     }
     if (freightstatus !== undefined) {
       updateData.freightstatus = freightstatus?.trim() || null;
+    }
+    if (installchargesstatus !== undefined) {
+      updateData.installchargesstatus = installchargesstatus?.trim() || null;
     }
     if (gstno !== undefined) {
       updateData.gstno = gstno?.trim() || null;
@@ -595,6 +601,7 @@ const bulkUploadOrders = async (req, res) => {
         gstno: String(entry.gstno || "").trim(),
         freightcs: String(entry.freightcs || "").trim(),
         freightstatus: String(entry.freightstatus || "").trim(),
+        installchargesstatus: String(entry.freightstatus || "").trim(),
         orderType: String(entry.orderType || "Private").trim(),
         installation: String(entry.installation || "N/A").trim(),
         installationStatus: String(
@@ -739,6 +746,10 @@ const exportentry = async (req, res) => {
         chequeId: index === 0 ? entry.chequeId || "" : "",
         freightcs: index === 0 ? entry.freightcs || "" : "",
         freightstatus: index === 0 ? entry.freightstatus || "" : "",
+
+        installchargesstatus:
+          index === 0 ? entry.installchargesstatus || "" : "",
+
         gstno: index === 0 ? entry.gstno || "" : "",
         orderType: index === 0 ? entry.orderType || "Private" : "",
         installation: index === 0 ? entry.installation || "N/A" : "",
