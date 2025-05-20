@@ -59,7 +59,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["Cash", "NEFT", "RTGS", "Cheque", ""],
       default: "",
-      required: true,
+     
     },
     paymentDue: { type: String, trim: true },
     neftTransactionId: { type: String, trim: true },
@@ -68,7 +68,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["100% Advance", "Partial Advance", "Credit", ""],
       default: "",
-      required: true,
+     
     },
     creditDays: { type: String, trim: true },
     freightcs: { type: String, trim: true },
