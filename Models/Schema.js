@@ -16,7 +16,7 @@ const productSchema = new mongoose.Schema({
   gst: {
     type: String,
     default: "18",
-    enum: ["18", "26", "including"],
+    enum: ["18", "28", "including"],
     trim: true,
     required: true,
   },
