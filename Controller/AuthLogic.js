@@ -2,6 +2,19 @@ const User = require("../Models/Model");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("../utils/config jwt");
 
+// Valid roles from User schema
+const VALID_ROLES = [
+  "Production",
+  "Sales",
+  "Installation",
+  "Finish",
+  "Accounts",
+  "Admin",
+  "Verification",
+  "Bill",
+  "ProductionApproval",
+];
+
 // Signup Controller
 const Signup = async (req, res) => {
   try {
@@ -9,6 +22,12 @@ const Signup = async (req, res) => {
 
     if (!username || !email || !password || !role) {
       return res.status(400).json({ message: "All fields are required" });
+    }
+
+    if (!VALID_ROLES.includes(role)) {
+      return res.status(400).json({
+        message: `Invalid role. Must be one of: ${VALID_ROLES.join(", ")}`,
+      });
     }
 
     const existingEmailUser = await User.findOne({ email });
@@ -41,9 +60,10 @@ const Signup = async (req, res) => {
     });
   } catch (error) {
     console.error("Signup Error:", error);
-    return res
-      .status(500)
-      .json({ message: "An error occurred during signup." });
+    return res.status(500).json({
+      message: "An error occurred during signup",
+      error: error.message,
+    });
   }
 };
 
@@ -82,7 +102,10 @@ const Login = async (req, res) => {
     });
   } catch (error) {
     console.error("Login Error:", error);
-    return res.status(500).json({ message: "An error occurred during login." });
+    return res.status(500).json({
+      message: "An error occurred during login",
+      error: error.message,
+    });
   }
 };
 

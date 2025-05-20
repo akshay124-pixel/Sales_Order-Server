@@ -6,21 +6,42 @@ const counterSchema = new mongoose.Schema({
 });
 
 const productSchema = new mongoose.Schema({
-  productType: { type: String, required: true, trim: true },
+  productType: { type: String, trim: true, required: true },
   size: { type: String, default: "N/A", trim: true },
   spec: { type: String, default: "N/A", trim: true },
-  qty: { type: Number, required: true, min: 1 },
+  qty: { type: Number, min: 1, required: true },
   unitPrice: { type: Number, required: true },
   serialNos: [{ type: String, trim: true }],
   modelNos: [{ type: String, trim: true }],
-  gst: { type: Number, default: 0, min: 0, max: 100 },
+  gst: {
+    type: String,
+    default: "18",
+    enum: ["18", "26", "including"],
+    trim: true,
+    required: true,
+  },
+  brand: { type: String, trim: true, default: "" },
+  warranty: { type: String, trim: true, required: true },
 });
 
 const orderSchema = new mongoose.Schema(
   {
     orderId: { type: String, unique: true },
     soDate: { type: Date, required: true },
-    dispatchFrom: { type: String, trim: true },
+    dispatchFrom: {
+      type: String,
+      trim: true,
+      enum: [
+        "PMTS Patna",
+        "PMTS Bareilly",
+        "PMTS Ranchi",
+        "PMTS Morinda",
+        "PMTS Lucknow",
+        "PMTS Delhi",
+        "",
+      ],
+      default: "",
+    },
     dispatchDate: { type: Date },
     name: { type: String, trim: true },
     gstno: { type: String, trim: true },
@@ -30,35 +51,45 @@ const orderSchema = new mongoose.Schema(
     contactNo: { type: String, trim: true },
     alterno: { type: String, trim: true },
     customerEmail: { type: String, trim: true },
-    customername: { type: String, trim: true },
+    customername: { type: String, trim: true, required: true },
     products: [productSchema],
-    total: { type: Number, min: 0 },
+    total: { type: Number, min: 0, required: true },
     paymentCollected: { type: String, trim: true },
     paymentMethod: {
       type: String,
       enum: ["Cash", "NEFT", "RTGS", "Cheque", ""],
       default: "",
+      required: true,
     },
     paymentDue: { type: String, trim: true },
     neftTransactionId: { type: String, trim: true },
     chequeId: { type: String, trim: true },
-    paymentTerms: { type: String, trim: true },
+    paymentTerms: {
+      type: String,
+      enum: ["100% Advance", "Partial Advance", "Credit", ""],
+      default: "",
+      required: true,
+    },
+    creditDays: { type: String, trim: true },
     freightcs: { type: String, trim: true },
     freightstatus: {
       type: String,
-      enum: ["To Pay", "Including", "Extra"],
-      default: "To Pay",
+      enum: ["Self-Pickup", "To Pay", "Including", "Extra"],
+      default: "Extra",
     },
+    actualFreight: { type: Number, min: 0 }, // New field
     installchargesstatus: {
       type: String,
       enum: ["To Pay", "Including", "Extra"],
-      default: "To Pay",
+      default: "Extra",
     },
     orderType: {
       type: String,
-      enum: ["GEM", "Goverment", "Private", "Demo", "Replacement", "repair"],
-      default: "Private",
+      enum: ["B2G", "B2C", "B2B", "Demo", "Replacement", "Stock Out"],
+      default: "B2C",
     },
+    gemOrderNumber: { type: String, trim: true },
+    deliveryDate: { type: Date },
     installation: { type: String, default: "N/A", trim: true },
     installationStatus: {
       type: String,
@@ -80,8 +111,9 @@ const orderSchema = new mongoose.Schema(
     report: { type: String, trim: true },
     company: {
       type: String,
-      enum: ["Promark", "Promine", "Others"],
+      enum: ["Promark", "Foxmate", "Promine", "Primus"],
       default: "Promark",
+      required: true,
     },
     transporter: { type: String, trim: true },
     transporterDetails: { type: String, trim: true },
@@ -93,7 +125,6 @@ const orderSchema = new mongoose.Schema(
     invoiceDate: { type: Date },
     fulfillingStatus: { type: String, default: "Pending", trim: true },
     remarksByProduction: { type: String, trim: true },
-
     remarksByAccounts: { type: String, trim: true },
     paymentReceived: {
       type: String,
@@ -101,11 +132,25 @@ const orderSchema = new mongoose.Schema(
       default: "Not Received",
     },
     billNumber: { type: String, trim: true },
+    piNumber: { type: String, trim: true },
+    remarksByBilling: { type: String, trim: true },
+    verificationRemarks: { type: String, trim: true },
+    billStatus: {
+      type: String,
+      enum: ["Pending", "Under Billing", "Billing Complete"],
+      default: "Pending",
+    },
     completionStatus: {
       type: String,
       enum: ["In Progress", "Complete"],
       default: "In Progress",
     },
+    stockStatus: {
+      type: String,
+      enum: ["In Stock", "Not in Stock", "Partial Stock"],
+      default: "In Stock",
+    },
+    demoDate: { type: Date },
     fulfillmentDate: { type: Date },
     remarks: { type: String, trim: true },
     sostatus: {

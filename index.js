@@ -1,36 +1,44 @@
 const express = require("express");
 const cors = require("cors");
+const http = require("http");
+const path = require("path");
 const SignupRoute = require("./Router/SignupRoute");
 const LoginRoute = require("./Router/LoginRoute");
 const dbconnect = require("./utils/dbconnect");
-const Routes = require("./Router/Routes"); // Import the orders routes
+const Routes = require("./Router/Routes");
+const Controller = require("./Controller/Logic");
 
 const app = express();
+const server = http.createServer(app);
+
+// Initialize Socket.IO
+Controller.initSocket(server);
 
 // CORS configuration
-const port = 5000; // Or 5000, depending on your setup
-
 const corsOptions = {
   origin: "https://sales-order-app-eight.vercel.app",
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   optionsSuccessStatus: 200,
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 // Middleware
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors(corsOptions));
 
 // Routes
-app.use("/api", Routes); // Use the orders routes for /api/orders
+app.use("/api", Routes);
 app.use("/auth", LoginRoute);
 app.use("/user", SignupRoute);
 
 // Start server after DB connection
+const PORT = process.env.PORT || 5000;
 dbconnect()
   .then(() => {
-    app.listen(port, () => {
-      console.log(`App listening on port ${port}!`);
+    server.listen(PORT, () => {
+      console.log(`App listening on port ${PORT}!`);
     });
   })
   .catch((error) => {
