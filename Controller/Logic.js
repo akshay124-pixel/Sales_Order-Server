@@ -85,19 +85,6 @@ const createOrder = async (req, res) => {
       dispatchFrom,
     } = req.body;
 
-    // Basic validations for payment-related fields
-    if (paymentMethod === "NEFT" && !neftTransactionId) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing NEFT Transaction ID",
-      });
-    }
-    if (paymentMethod === "Cheque" && !chequeId) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing Cheque ID",
-      });
-    }
     if (orderType === "B2G" && !gemOrderNumber) {
       return res.status(400).json({
         success: false,
@@ -108,12 +95,6 @@ const createOrder = async (req, res) => {
       return res.status(400).json({
         success: false,
         error: "Missing Demo Date",
-      });
-    }
-    if (paymentTerms === "Credit" && !creditDays) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing Credit Days",
       });
     }
 
@@ -276,7 +257,6 @@ const createOrder = async (req, res) => {
     });
   }
 };
-
 // Edit an existing order
 const editEntry = async (req, res) => {
   try {
