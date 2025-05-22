@@ -97,7 +97,12 @@ const createOrder = async (req, res) => {
         error: "Missing Demo Date",
       });
     }
-
+    if (!paymentTerms && orderType !== "Demo") {
+      return res.status(400).json({
+        success: false,
+        error: "Payment Terms is required for non-Demo orders",
+      });
+    }
     // Validate dispatchFrom
     const validDispatchLocations = [
       "PMTS Patna",
