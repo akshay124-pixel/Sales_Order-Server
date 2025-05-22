@@ -233,7 +233,7 @@ const createOrder = async (req, res) => {
       creditDays: creditDays || "",
       createdBy: req.user.id,
       dispatchFrom,
-      fulfillingStatus: fulfillingStatus || "Not Fulfilled",
+      fulfillingStatus: fulfillingStatus || "Pending",
     });
 
     // Save order
