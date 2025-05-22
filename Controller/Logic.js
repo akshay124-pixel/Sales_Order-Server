@@ -854,11 +854,12 @@ const exportentry = async (req, res) => {
 const getFinishedGoodsOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      dispatchStatus: { $ne: "Delivered" },
+      fulfillingStatus: "Fulfilled", // Only include Fulfilled orders
+      dispatchStatus: { $ne: "Delivered" }, // Exclude Delivered orders
     }).populate("createdBy", "username email");
-    res.json({ success: true, data: orders });
+    res.status(200).json({ success: true, data: orders });
   } catch (error) {
-    console.error("Error in getFinishedGoodsOrders:", error);
+    console.error("Error in getFinishedGoodsOrders:", error.message);
     res.status(500).json({
       success: false,
       message: "Failed to fetch finished goods orders",
@@ -866,7 +867,6 @@ const getFinishedGoodsOrders = async (req, res) => {
     });
   }
 };
-
 // Fetch verification orders
 const getVerificationOrders = async (req, res) => {
   try {
@@ -961,7 +961,8 @@ const getProductionOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       sostatus: "Approved",
-      completionStatus: { $ne: "Complete" },
+
+      fulfillingStatus: { $ne: "Fulfilled" }, // Exclude Fulfilled orders
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
