@@ -877,6 +877,7 @@ const getVerificationOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       paymentTerms: { $in: ["100% Advance", "Partial Advance"] },
+      sostatus: { $nin: ["Accounts Approved", "Approved"] },
     }).populate("createdBy", "username email");
     res.json({ success: true, data: orders });
   } catch (error) {
@@ -888,7 +889,6 @@ const getVerificationOrders = async (req, res) => {
     });
   }
 };
-
 // Fetch bill orders
 const getBillOrders = async (req, res) => {
   try {
