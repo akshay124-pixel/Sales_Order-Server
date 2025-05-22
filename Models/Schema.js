@@ -59,7 +59,6 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["Cash", "NEFT", "RTGS", "Cheque", ""],
       default: "",
-     
     },
     paymentDue: { type: String, trim: true },
     neftTransactionId: { type: String, trim: true },
@@ -68,7 +67,6 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["100% Advance", "Partial Advance", "Credit", ""],
       default: "",
-     
     },
     creditDays: { type: String, trim: true },
     freightcs: { type: String, trim: true },
@@ -93,7 +91,15 @@ const orderSchema = new mongoose.Schema(
     installation: { type: String, default: "N/A", trim: true },
     installationStatus: {
       type: String,
-      enum: ["Pending", "In Progress", "Completed", "Failed"],
+      enum: [
+        "Pending",
+        "In Progress",
+        "Completed",
+        "Failed",
+        "Hold by Salesperson",
+        "Hold by Customer",
+        "Site Not Ready",
+      ],
       default: "Pending",
     },
     remarksByInstallation: { type: String, default: "", trim: true },
