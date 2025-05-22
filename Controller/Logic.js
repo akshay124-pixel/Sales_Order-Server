@@ -915,7 +915,6 @@ const getInstallationOrders = async (req, res) => {
         $in: [
           "Pending",
           "In Progress",
-
           "Failed",
           "Hold by Salesperson",
           "Hold by Customer",
