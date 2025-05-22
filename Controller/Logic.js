@@ -958,16 +958,12 @@ const getProductionApprovalOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       paymentTerms: "Credit",
-      $or: [
-        { sostatus: { $ne: "Approved" } },
-        { sostatus: "Accounts Approved" },
-      ],
-    })
-      .populate("createdBy", "username email")
-      .lean();
+      sostatus: "Accounts Approved",
+      sostatus: { $ne: "Approved" },
+    }).populate("createdBy", "username email");
     res.json({ success: true, data: orders });
   } catch (error) {
-    console.error("Error in getProductionApprovalOrders:", error.message);
+    console.error("Error in getProductionApprovalOrders:", error);
     res.status(500).json({
       success: false,
       message: "Failed to fetch production approval orders",
