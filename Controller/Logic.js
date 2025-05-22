@@ -83,6 +83,7 @@ const createOrder = async (req, res) => {
       paymentTerms,
       creditDays,
       dispatchFrom,
+      fulfillingStatus,
     } = req.body;
 
     if (orderType === "B2G" && !gemOrderNumber) {
@@ -232,6 +233,7 @@ const createOrder = async (req, res) => {
       creditDays: creditDays || "",
       createdBy: req.user.id,
       dispatchFrom,
+      fulfillingStatus: fulfillingStatus || "Not Fulfilled",
     });
 
     // Save order
