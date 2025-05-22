@@ -91,15 +91,6 @@ const orderSchema = new mongoose.Schema(
     installation: { type: String, default: "N/A", trim: true },
     installationStatus: {
       type: String,
-      enum: [
-        "Pending",
-        "In Progress",
-        "Completed",
-        "Failed",
-        "Hold by Salesperson",
-        "Hold by Customer",
-        "Site Not Ready",
-      ],
       default: "Pending",
     },
     remarksByInstallation: { type: String, default: "", trim: true },
