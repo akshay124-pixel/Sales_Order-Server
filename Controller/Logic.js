@@ -104,6 +104,13 @@ const createOrder = async (req, res) => {
         error: "Payment Terms is required for non-Demo orders",
       });
     }
+
+    if (!fulfillingStatus) {
+      fulfillingStatus =
+        orderType === "Demo" || dispatchFrom !== "PMTS Morinda"
+          ? "Fulfilled"
+          : "Not Fulfilled";
+    }
     // Validate dispatchFrom
     const validDispatchLocations = [
       "PMTS Patna",
