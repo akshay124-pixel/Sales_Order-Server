@@ -859,8 +859,8 @@ const exportentry = async (req, res) => {
 const getFinishedGoodsOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      fulfillingStatus: "Fulfilled", // Only include Fulfilled orders
-      dispatchStatus: { $ne: "Delivered" }, // Exclude Delivered orders
+      fulfillingStatus: "Fulfilled",
+      dispatchStatus: { $ne: "Delivered" },
     }).populate("createdBy", "username email");
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
@@ -976,8 +976,9 @@ const getProductionOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       sostatus: "Approved",
-
-      fulfillingStatus: { $ne: "Fulfilled" }, // Exclude Fulfilled orders
+      fulfillingStatus: { $ne: "Fulfilled" },
+      dispatchFrom: "PMTS Morinda",
+      orderType: { $ne: "Demo" },
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {

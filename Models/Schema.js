@@ -98,9 +98,12 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: [
         "Not Dispatched",
+        "Docket Awaited Dispatched",
+        "Hold by Salesperson",
+        "Hold by Customer",
+        "Order Cancelled",
         "Dispatched",
         "Delivered",
-        "Docket Awaited Dispatched",
       ],
       default: "Not Dispatched",
     },
