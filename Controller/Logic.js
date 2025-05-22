@@ -907,10 +907,21 @@ const getBillOrders = async (req, res) => {
   }
 };
 // Fetch installation orders
+
 const getInstallationOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      installationStatus: { $in: ["Pending", "In Progress", "Failed"] },
+      installationStatus: {
+        $in: [
+          "Pending",
+          "In Progress",
+
+          "Failed",
+          "Hold by Salesperson",
+          "Hold by Customer",
+          "Site Not Ready",
+        ],
+      },
     }).populate("createdBy", "username email");
     res.json({ success: true, data: orders });
   } catch (error) {
