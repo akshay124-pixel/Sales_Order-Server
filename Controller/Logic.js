@@ -894,6 +894,7 @@ const getBillOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       sostatus: "Approved",
+      billStatus: { $ne: "Billing Complete" },
     }).populate("createdBy", "username email");
     res.json({ success: true, data: orders });
   } catch (error) {
@@ -905,7 +906,6 @@ const getBillOrders = async (req, res) => {
     });
   }
 };
-
 // Fetch installation orders
 const getInstallationOrders = async (req, res) => {
   try {
