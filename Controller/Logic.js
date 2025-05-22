@@ -114,44 +114,43 @@ const createOrder = async (req, res) => {
       });
     }
 
-   // Validate products
-   for (const product of products) {
-    if (
-      !product.productType ||
-      !product.qty ||
-      !product.gst ||
-      !product.warranty
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid product data",
-        details:
-          "Each product must have productType, qty, gst, and warranty",
-      });
-    }
-    if (
-      isNaN(Number(product.qty)) ||
-      Number(product.qty) <= 0 ||
-      isNaN(Number(product.unitPrice)) ||
-      Number(product.unitPrice) < 0 ||
-      (product.gst !== "including" && isNaN(Number(product.gst)))
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid product data",
-        details: "qty must be positive, unitPrice must be non-negative, and gst must be valid",
-      });
-    }
-    if (
-      product.productType === "IFPD" &&
-      (!product.modelNos || !product.brand)
-    ) {
-      return res.status(400).json({
-        success: false,
-        error: "Model Numbers and Brand are required for IFPD products",
-      });
-    }
-  }
+    // Validate products
+    for (const product of products) {
+      if (
+        !product.productType ||
+        !product.qty ||
+        !product.gst ||
+        !product.warranty
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid product data",
+          details: "Each product must have productType, qty, gst, and warranty",
+        });
+      }
+      if (
+        isNaN(Number(product.qty)) ||
+        Number(product.qty) <= 0 ||
+        isNaN(Number(product.unitPrice)) ||
+        Number(product.unitPrice) < 0 ||
+        (product.gst !== "including" && isNaN(Number(product.gst)))
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid product data",
+          details:
+            "qty must be positive, unitPrice must be non-negative, and gst must be valid",
+        });
+      }
+      if (
+        product.productType === "IFPD" &&
+        (!product.modelNos || !product.brand)
+      ) {
+        return res.status(400).json({
+          success: false,
+          error: "Model Numbers and Brand are required for IFPD products",
+        });
+      }
       // Set default warranty
       product.warranty =
         product.warranty ||
