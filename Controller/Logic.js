@@ -130,12 +130,13 @@ const createOrder = async (req, res) => {
             "Each product must have productType, qty, unitPrice, gst, and warranty",
         });
       }
-      if (
-        isNaN(Number(product.qty)) ||
-        Number(product.qty) <= 0 ||
-        isNaN(Number(product.unitPrice)) ||
-        (product.gst !== "including" && isNaN(Number(product.gst)))
-      ) {
+      // if (
+      //   isNaN(Number(product.qty)) ||
+      //   Number(product.qty) <= 0 ||
+      //   isNaN(Number(product.unitPrice)) ||
+      //   (product.gst !== "including" && isNaN(Number(product.gst)))
+      // )
+      {
         return res.status(400).json({
           success: false,
           error: "Invalid product data",
