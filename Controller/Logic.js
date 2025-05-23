@@ -966,9 +966,15 @@ const getAccountsOrders = async (req, res) => {
 const getProductionApprovalOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      paymentTerms: "Credit",
-      sostatus: "Accounts Approved",
-      sostatus: { $ne: "Approved" },
+      $or: [
+        { sostatus: "Accounts Approved" }, // Include all orders with sostatus "Accounts Approved"
+        {
+          $and: [
+            { sostatus: "Pending for Approval" }, // Include orders with sostatus "Pending for Approval"
+            { paymentTerms: "Credit" }, // Only if paymentTerms is "Credit"
+          ],
+        },
+      ],
     }).populate("createdBy", "username email");
     res.json({ success: true, data: orders });
   } catch (error) {
