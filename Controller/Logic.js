@@ -107,18 +107,18 @@ const createOrder = async (req, res) => {
 
     if (!fulfillingStatus) {
       fulfillingStatus =
-        orderType === "Demo" || dispatchFrom !== "PMTS Morinda"
+        orderType === "Demo" || dispatchFrom !== "Morinda"
           ? "Fulfilled"
           : "Not Fulfilled";
     }
     // Validate dispatchFrom
     const validDispatchLocations = [
-      "PMTS Patna",
-      "PMTS Bareilly",
-      "PMTS Ranchi",
-      "PMTS Morinda",
-      "PMTS Lucknow",
-      "PMTS Delhi",
+      "Patna",
+      "Bareilly",
+      "Ranchi",
+      "Morinda",
+      "Lucknow",
+      "Delhi",
     ];
     if (dispatchFrom && !validDispatchLocations.includes(dispatchFrom)) {
       return res.status(400).json({
@@ -474,12 +474,12 @@ const bulkUploadOrders = async (req, res) => {
 
     const orders = [];
     const validDispatchLocations = [
-      "PMTS Patna",
-      "PMTS Bareilly",
-      "PMTS Ranchi",
-      "PMTS Morinda",
-      "PMTS Lucknow",
-      "PMTS Delhi",
+      "Patna",
+      "Bareilly",
+      "Ranchi",
+      "Morinda",
+      "Lucknow",
+      "Delhi",
     ];
 
     for (const row of jsonData) {
@@ -993,7 +993,7 @@ const getProductionOrders = async (req, res) => {
     const orders = await Order.find({
       sostatus: "Approved",
       fulfillingStatus: { $ne: "Fulfilled" },
-      dispatchFrom: "PMTS Morinda",
+      dispatchFrom: "Morinda",
       orderType: { $ne: "Demo" },
     }).lean();
     res.status(200).json({ success: true, data: orders });

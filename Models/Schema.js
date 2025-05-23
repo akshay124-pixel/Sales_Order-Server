@@ -31,15 +31,7 @@ const orderSchema = new mongoose.Schema(
     dispatchFrom: {
       type: String,
       trim: true,
-      enum: [
-        "PMTS Patna",
-        "PMTS Bareilly",
-        "PMTS Ranchi",
-        "PMTS Morinda",
-        "PMTS Lucknow",
-        "PMTS Delhi",
-        "",
-      ],
+      enum: ["Patna", "Bareilly", "Ranchi", "Morinda", "Lucknow", "Delhi", ""],
       default: "",
     },
     dispatchDate: { type: Date },
