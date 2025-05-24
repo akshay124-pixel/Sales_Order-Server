@@ -992,9 +992,8 @@ const getProductionOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       sostatus: "Approved",
-      fulfillingStatus: { $ne: "Fulfilled" },
       dispatchFrom: "Morinda",
-      orderType: { $ne: "Demo" },
+      fulfillingStatus: { $ne: "Fulfilled" },
     }).lean();
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
