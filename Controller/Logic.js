@@ -990,11 +990,20 @@ const getProductionApprovalOrders = async (req, res) => {
 // Fetch production orders
 const getProductionOrders = async (req, res) => {
   try {
+    const dispatchFromOptions = [
+      "Patna",
+      "Bareilly",
+      "Ranchi",
+      "Lucknow",
+      "Delhi",
+    ];
+
     const orders = await Order.find({
       sostatus: "Approved",
-      dispatchFrom: "Morinda",
+      dispatchFrom: { $nin: dispatchFromOptions },
       fulfillingStatus: { $ne: "Fulfilled" },
     }).lean();
+
     res.status(200).json({ success: true, data: orders });
   } catch (error) {
     console.error("Error in getProductionOrders:", error.message);
