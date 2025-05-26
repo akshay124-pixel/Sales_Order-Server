@@ -920,6 +920,7 @@ const getBillOrders = async (req, res) => {
 const getInstallationOrders = async (req, res) => {
   try {
     const orders = await Order.find({
+      dispatchStatus: "Delivered",
       installationStatus: {
         $in: [
           "Pending",
