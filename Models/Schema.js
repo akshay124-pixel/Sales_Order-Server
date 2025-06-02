@@ -31,7 +31,17 @@ const orderSchema = new mongoose.Schema(
     dispatchFrom: {
       type: String,
       trim: true,
-      enum: ["Patna", "Bareilly", "Ranchi", "Morinda", "Lucknow", "Delhi", ""],
+      enum: [
+        "Patna",
+        "Bareilly",
+        "Ranchi",
+        "Morinda",
+        "Lucknow",
+        "Delhi",
+        "Jaipur",
+        "Rajasthan",
+        "",
+      ],
       default: "",
     },
     dispatchDate: { type: Date },

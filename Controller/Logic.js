@@ -119,6 +119,8 @@ const createOrder = async (req, res) => {
       "Morinda",
       "Lucknow",
       "Delhi",
+      "Jaipur",
+      "Rajasthan",
     ];
     if (dispatchFrom && !validDispatchLocations.includes(dispatchFrom)) {
       return res.status(400).json({
@@ -480,6 +482,8 @@ const bulkUploadOrders = async (req, res) => {
       "Morinda",
       "Lucknow",
       "Delhi",
+      "Jaipur",
+      "Rajasthan",
     ];
 
     for (const row of jsonData) {
@@ -997,6 +1001,8 @@ const getProductionOrders = async (req, res) => {
       "Ranchi",
       "Lucknow",
       "Delhi",
+      "Jaipur",
+      "Rajasthan",
     ];
 
     const orders = await Order.find({
