@@ -157,7 +157,12 @@ const orderSchema = new mongoose.Schema(
     remarks: { type: String, trim: true },
     sostatus: {
       type: String,
-      enum: ["Pending for Approval", "Accounts Approved", "Approved"],
+      enum: [
+        "Pending for Approval",
+        "Accounts Approved",
+        "Approved",
+        "Order on Hold Due to Low Price",
+      ],
       default: "Pending for Approval",
     },
     createdBy: {
