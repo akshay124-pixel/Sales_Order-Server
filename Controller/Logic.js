@@ -199,10 +199,18 @@ const createOrder = async (req, res) => {
 
     const calculatedPaymentDue =
       calculatedTotal - Number(paymentCollected || 0);
-
+    // Format date and time
+    const formatDateTime = (dateStr) => {
+      if (!dateStr) return null;
+      const date = new Date(dateStr);
+      if (isNaN(date.getTime())) {
+        return null; // Invalid date
+      }
+      return date; // Keep both date and time
+    };
     // Create order
     const order = new Order({
-      soDate: new Date(),
+      soDate: formatDateTime(new Date()),
       name,
       city,
       state,
