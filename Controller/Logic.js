@@ -20,7 +20,20 @@ const initSocket = (server) => {
     });
   });
 };
+// Shared function to create notifications
+function createNotification(req, order, action) {
+  const username = req.user?.username || "User";
+  const customerName = order.customername || "Unknown";
+  const orderId = order.orderId || "N/A";
 
+  return new Notification({
+    message: `${action} by ${username} for ${customerName} (Order ID: ${orderId})`,
+    timestamp: new Date(),
+    isRead: false,
+    role: "All",
+    userId: req.user?.id || null,
+  });
+}
 // Get all orders
 const getAllOrders = async (req, res) => {
   try {
@@ -86,6 +99,7 @@ const createOrder = async (req, res) => {
       fulfillingStatus,
     } = req.body;
 
+    // Validate required fields
     if (orderType === "B2G" && !gemOrderNumber) {
       return res.status(400).json({
         success: false,
@@ -105,12 +119,13 @@ const createOrder = async (req, res) => {
       });
     }
 
-    if (!fulfillingStatus) {
-      fulfillingStatus =
-        orderType === "Demo" || dispatchFrom !== "Morinda"
-          ? "Fulfilled"
-          : "Not Fulfilled";
-    }
+    // Set default fulfillingStatus
+    const computedFulfillingStatus =
+      fulfillingStatus ||
+      (orderType === "Demo" || dispatchFrom !== "Morinda"
+        ? "Fulfilled"
+        : "Not Fulfilled");
+
     // Validate dispatchFrom
     const validDispatchLocations = [
       "Patna",
@@ -199,15 +214,14 @@ const createOrder = async (req, res) => {
 
     const calculatedPaymentDue =
       calculatedTotal - Number(paymentCollected || 0);
+
     // Format date and time
     const formatDateTime = (dateStr) => {
       if (!dateStr) return null;
       const date = new Date(dateStr);
-      if (isNaN(date.getTime())) {
-        return null; // Invalid date
-      }
-      return date; // Keep both date and time
+      return isNaN(date.getTime()) ? null : date;
     };
+
     // Create order
     const order = new Order({
       soDate: formatDateTime(new Date()),
@@ -250,31 +264,28 @@ const createOrder = async (req, res) => {
       creditDays: creditDays || "",
       createdBy: req.user.id,
       dispatchFrom,
-      fulfillingStatus: fulfillingStatus || "Pending",
+      fulfillingStatus: computedFulfillingStatus,
     });
 
     // Save order
     const savedOrder = await order.save();
 
-    // Create notification
-    const notification = new Notification({
-      message: `New sales order created by ${req.user.username || "User"} for ${
-        savedOrder.customername || "Unknown"
-      } (Order ID: ${savedOrder.orderId || "N/A"})`,
-      timestamp: new Date(),
-      isRead: false,
-      role: "All",
-      userId: req.user.id,
-    });
+    // Create and save notification
+    const notification = createNotification(
+      req,
+      savedOrder,
+      "New sales order created"
+    );
     await notification.save();
 
-    // Emit notification to all connected clients
+    // Emit notification
     io.to("global").emit("newOrder", {
       _id: savedOrder._id,
       customername: savedOrder.customername,
       orderId: savedOrder.orderId,
       notification,
     });
+
     res.status(201).json({ success: true, data: savedOrder });
   } catch (error) {
     console.error("Error in createOrder:", error);
@@ -298,6 +309,14 @@ const editEntry = async (req, res) => {
   try {
     const orderId = req.params.id;
     const updateData = req.body;
+
+    // Validate orderId
+    if (!mongoose.Types.ObjectId.isValid(orderId)) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid order ID",
+      });
+    }
 
     // Log request body for debugging
     console.log("Edit request body:", updateData);
@@ -391,54 +410,73 @@ const editEntry = async (req, res) => {
       }
     }
 
-    // Automatically set completionStatus to "Complete" if fulfillingStatus is "Fulfilled"
-    if (updateData.fulfillingStatus === "Fulfilled") {
+    // Validate sostatus if provided
+    if (updateFields.sostatus) {
+      const validStatuses = [
+        "Pending for Approval",
+        "Accounts Approved",
+        "Approved",
+      ];
+      if (!validStatuses.includes(updateFields.sostatus)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid sostatus value",
+          details: `sostatus must be one of: ${validStatuses.join(", ")}`,
+        });
+      }
+    }
+
+    // Automatically set completionStatus and fulfillmentDate
+    if (updateFields.fulfillingStatus === "Fulfilled") {
       updateFields.completionStatus = "Complete";
-      // Optionally set fulfillmentDate to current date if not provided
       if (!updateFields.fulfillmentDate) {
         updateFields.fulfillmentDate = new Date();
       }
     }
 
-    // Update the order without validations
+    // Update the order
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
       { $set: updateFields },
-      { new: true, runValidators: false } // Disable Mongoose schema validations
+      { new: true, runValidators: false } // Disable validations to avoid schema issues
     );
 
     if (!updatedOrder) {
       return res.status(404).json({
         success: false,
-        error: "Order not found",
+        error: "Order not found after update attempt",
       });
     }
 
-    // Create notification
-    const notification = new Notification({
-      message: `Order updated by ${req.user.username || "User"} for ${
-        updatedOrder.customername || "Unknown"
-      } (Order ID: ${updatedOrder.orderId || "N/A"})`,
-      timestamp: new Date(),
-      isRead: false,
-      role: "All", // Always notify all users
-      userId: req.user.id,
-    });
+    // Create and save notification
+    const notification = createNotification(req, updatedOrder, "Order updated");
     await notification.save();
 
-    // Emit notification to all connected clients
+    // Emit notification
     io.to("global").emit("updateOrder", {
       _id: updatedOrder._id,
       customername: updatedOrder.customername,
       orderId: updatedOrder.orderId,
       notification,
     });
+
     res.status(200).json({ success: true, data: updatedOrder });
   } catch (error) {
-    console.error("Error in editEntry:", error);
+    console.error("Error in editEntry:", {
+      message: error.message,
+      stack: error.stack,
+      updateData,
+      orderId,
+    });
+    if (error.name === "CastError") {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid order ID format",
+      });
+    }
     res.status(500).json({
       success: false,
-      error: "Server error",
+      error: "Failed to update order",
       details: error.message,
     });
   }
