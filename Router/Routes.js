@@ -35,5 +35,7 @@ router.get(
   Controller.getProductionApprovalOrders
 );
 router.get("/get-bill-orders", verifyToken, Controller.getBillOrders);
-
+router.get("/notifications", verifyToken, Controller.getNotifications);
+router.post("/mark-read", verifyToken, Controller.markNotificationsRead);
+router.delete("/clear", verifyToken, Controller.clearNotifications);
 module.exports = router;

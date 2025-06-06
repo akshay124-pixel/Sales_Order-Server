@@ -197,8 +197,16 @@ orderSchema.pre("save", async function (next) {
     next();
   }
 });
+const notificationSchema = new mongoose.Schema({
+  message: { type: String, required: true },
+  timestamp: { type: Date, default: Date.now },
+  isRead: { type: Boolean, default: false },
+  role: { type: String, required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+});
 
 const Order = mongoose.model("Order", orderSchema);
 const Counter = mongoose.model("Counter", counterSchema);
+const Notification = mongoose.model("Notification", notificationSchema);
 
-module.exports = { Order, Counter };
+module.exports = { Order, Counter, Notification };

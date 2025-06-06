@@ -1,7 +1,7 @@
 const mongoose = require("mongoose");
 const XLSX = require("xlsx");
 const { Server } = require("socket.io");
-const { Order, Counter } = require("../Models/Schema");
+const { Order } = require("../Models/Schema");
 
 let io;
 
@@ -256,13 +256,25 @@ const createOrder = async (req, res) => {
     // Save order
     const savedOrder = await order.save();
 
-    // Emit newOrder event
-    io.emit("newOrder", {
+    // Create notification
+    const notification = new Notification({
+      message: `New sales order created by ${req.user.username || "User"} for ${
+        savedOrder.customername || "Unknown"
+      } (Order ID: ${savedOrder.orderId || "N/A"})`,
+      timestamp: new Date(),
+      isRead: false,
+      role: "All",
+      userId: req.user.id,
+    });
+    await notification.save();
+
+    // Emit notification to all connected clients
+    io.to("global").emit("newOrder", {
       _id: savedOrder._id,
       customername: savedOrder.customername,
       orderId: savedOrder.orderId,
+      notification,
     });
-
     res.status(201).json({ success: true, data: savedOrder });
   } catch (error) {
     console.error("Error in createOrder:", error);
@@ -402,13 +414,25 @@ const editEntry = async (req, res) => {
       });
     }
 
-    // Emit updateOrder event
-    io.emit("updateOrder", {
+    // Create notification
+    const notification = new Notification({
+      message: `Order updated by ${req.user.username || "User"} for ${
+        updatedOrder.customername || "Unknown"
+      } (Order ID: ${updatedOrder.orderId || "N/A"})`,
+      timestamp: new Date(),
+      isRead: false,
+      role: "All", // Always notify all users
+      userId: req.user.id,
+    });
+    await notification.save();
+
+    // Emit notification to all connected clients
+    io.to("global").emit("updateOrder", {
       _id: updatedOrder._id,
       customername: updatedOrder.customername,
       orderId: updatedOrder.orderId,
+      notification,
     });
-
     res.status(200).json({ success: true, data: updatedOrder });
   } catch (error) {
     console.error("Error in editEntry:", error);
@@ -466,7 +490,6 @@ const parseDate = (dateStr) => {
   return isNaN(date.getTime()) ? null : date;
 };
 
-// Bulk upload orders
 // Bulk upload orders
 const bulkUploadOrders = async (req, res) => {
   try {
@@ -1029,6 +1052,68 @@ const getProductionOrders = async (req, res) => {
     });
   }
 };
+
+// Notifictions
+// Fetch notifications
+const getNotifications = async (req, res) => {
+  try {
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized: User not authenticated",
+      });
+    }
+    console.log("Fetching notifications for user:", req.user.id);
+    const notifications = await Notification.find({ role: "All" })
+      .sort({ timestamp: -1 })
+      .limit(50);
+    console.log("Notifications found:", notifications.length);
+    res.status(200).json({ success: true, data: notifications });
+  } catch (error) {
+    console.error("Error in getNotifications:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch notifications",
+      error: error.message,
+    });
+  }
+};
+
+// Mark notifications as read
+const markNotificationsRead = async (req, res) => {
+  try {
+    await Notification.updateMany({ role: "All" }, { isRead: true });
+    res
+      .status(200)
+      .json({ success: true, message: "Notifications marked as read" });
+  } catch (error) {
+    console.error("Error in markNotificationsRead:", error.stack);
+    res.status(500).json({
+      success: false,
+      message: "Failed to mark notifications as read",
+      error: error.message,
+    });
+  }
+};
+
+// Clear notifications
+const clearNotifications = async (req, res) => {
+  try {
+    await Notification.deleteMany({ role: "All" });
+    res.status(200).json({ success: true, message: "Notifications cleared" });
+  } catch (error) {
+    console.error("Error in clearNotifications:", error.stack);
+    res.status(500).json({
+      success: false,
+      message: "Failed to clear notifications",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   initSocket,
   getAllOrders,
@@ -1044,4 +1129,7 @@ module.exports = {
   getInstallationOrders,
   getAccountsOrders,
   getProductionOrders,
+  getNotifications,
+  markNotificationsRead,
+  clearNotifications,
 };
