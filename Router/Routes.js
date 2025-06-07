@@ -1,8 +1,29 @@
 const express = require("express");
 const router = express.Router();
 const Controller = require("../Controller/Logic");
-
+const multer = require("multer");
+const path = require("path");
+const crypto = require("crypto");
 const { verifyToken } = require("../utils/config jwt");
+
+// Multer setup for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, path.join(__dirname, "../Uploads"));
+  },
+  filename: function (req, file, cb) {
+    const randomBytes = crypto.randomBytes(16).toString("hex");
+    const ext = path.extname(file.originalname);
+    cb(null, `${randomBytes}${ext}`);
+  },
+});
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: {
+    fileSize: 5 * 1024 * 1024,
+  },
+});
 
 router.get("/get-orders", verifyToken, Controller.getAllOrders);
 router.get(
@@ -11,7 +32,12 @@ router.get(
   Controller.getInstallationOrders
 );
 router.get("/accounts-orders", verifyToken, Controller.getAccountsOrders);
-router.post("/orders", verifyToken, Controller.createOrder);
+router.post(
+  "/orders",
+  verifyToken,
+  upload.single("poFile"),
+  Controller.createOrder
+);
 router.delete("/delete/:id", verifyToken, Controller.DeleteData);
 router.put("/edit/:id", Controller.editEntry);
 router.get("/export", verifyToken, Controller.exportentry);

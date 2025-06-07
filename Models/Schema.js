@@ -62,6 +62,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["Cash", "NEFT", "RTGS", "Cheque", ""],
       default: "",
     },
+    poFilePath: String,
     paymentDue: { type: String, trim: true },
     neftTransactionId: { type: String, trim: true },
     chequeId: { type: String, trim: true },
