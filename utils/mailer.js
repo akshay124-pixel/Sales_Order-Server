@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
 // Wrap in an async IIFE so we can use await.
 async function sendMail(to, subject, text, html) {
   const info = await transporter.sendMail({
-    from: "Promark Tech Solutions",
+    from: '"Promark Tech Solutions" <salesorderweb@gmail.com>',
     to,
     subject,
     text,
