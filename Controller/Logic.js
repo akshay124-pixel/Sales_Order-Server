@@ -97,7 +97,11 @@ const createOrder = async (req, res) => {
       dispatchFrom,
       fulfillingStatus,
     } = req.body;
-
+    // Handle file upload
+    let poFilePath = "";
+    if (req.file) {
+      poFilePath = `/Uploads/${req.file.filename}`;
+    }
     // Required fields check
     if (orderType === "B2G" && !gemOrderNumber) {
       return res
