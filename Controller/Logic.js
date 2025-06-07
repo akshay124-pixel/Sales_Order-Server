@@ -482,6 +482,68 @@ const editEntry = async (req, res) => {
       });
     }
 
+    // Send email if dispatchStatus is updated to "Dispatched" or "Delivered"
+    if (
+      (updateFields.dispatchStatus === "Dispatched" ||
+        updateFields.dispatchStatus === "Delivered") &&
+      updatedOrder.customerEmail
+    ) {
+      try {
+        const statusText =
+          updateFields.dispatchStatus === "Dispatched"
+            ? "dispatched"
+            : "delivered";
+        const subject = `Order ${
+          statusText.charAt(0).toUpperCase() + statusText.slice(1)
+        } Confirmation - Order #${updatedOrder.orderId || updatedOrder._id}`;
+        const text = `
+Dear ${updatedOrder.customername || "Customer"},
+
+We are pleased to inform you that your order has been ${statusText}. Below are the order details:
+
+Order ID: ${updatedOrder.orderId || updatedOrder._id}
+Order Type: ${updatedOrder.orderType || "N/A"}
+Total: ₹${updatedOrder.total || 0}
+Dispatch From: ${updatedOrder.dispatchFrom || "N/A"}
+${
+  updateFields.dispatchStatus === "Dispatched"
+    ? `Dispatch Date: ${
+        updatedOrder.dispatchDate
+          ? new Date(updatedOrder.dispatchDate).toLocaleString("en-IN")
+          : "N/A"
+      }`
+    : `Delivery Date: ${
+        updatedOrder.receiptDate
+          ? new Date(updatedOrder.receiptDate).toLocaleString("en-IN")
+          : "N/A"
+      }`
+}
+Transporter: ${updatedOrder.transporter || "N/A"}
+Transporter Details: ${updatedOrder.transporterDetails || "N/A"}
+Docket No: ${updatedOrder.docketNo || "N/A"}
+
+Products:
+${updatedOrder.products
+  .map(
+    (p, i) =>
+      `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
+        p.unitPrice
+      }, GST: ${p.gst}, Brand: ${p.brand}`
+  )
+  .join("\n")}
+
+Thank you for your business.
+– Promark Tech Solutions
+        `;
+        await sendMail(updatedOrder.customerEmail, subject, text);
+      } catch (mailErr) {
+        console.error(
+          `${updateFields.dispatchStatus} email sending failed:`,
+          mailErr.message
+        );
+      }
+    }
+
     // Create and save notification
     const notification = createNotification(req, updatedOrder, "Order updated");
     await notification.save();
@@ -515,7 +577,6 @@ const editEntry = async (req, res) => {
     });
   }
 };
-
 // Delete an order
 const DeleteData = async (req, res) => {
   try {
@@ -541,7 +602,21 @@ const DeleteData = async (req, res) => {
         .json({ success: false, message: "Unauthorized to delete this order" });
     }
 
+    // Delete the order
     await Order.findByIdAndDelete(req.params.id);
+
+    // Create and save notification
+    const notification = createNotification(req, order, "Order deleted");
+    await notification.save();
+
+    // Emit notification
+    io.to("global").emit("deleteOrder", {
+      _id: order._id,
+      customername: order.customername,
+      orderId: order.orderId,
+      notification,
+    });
+
     res
       .status(200)
       .json({ success: true, message: "Order deleted successfully" });
