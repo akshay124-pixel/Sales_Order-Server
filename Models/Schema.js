@@ -85,7 +85,7 @@ const orderSchema = new mongoose.Schema(
     },
     orderType: {
       type: String,
-      enum: ["B2G", "B2C", "B2B", "Demo", "Replacement", "Stock Out"],
+      enum: ["B2G", "B2C", "B2B", "Demo", "Replacement", "Stock Out", "Repair"],
       default: "B2C",
     },
     gemOrderNumber: { type: String, trim: true },
