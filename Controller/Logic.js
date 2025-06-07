@@ -58,11 +58,6 @@ const getAllOrders = async (req, res) => {
   }
 };
 
-const Order = require("../models/Order");
-const { createNotification } = require("../utils/notifications");
-const { sendMail } = require("../utils/mailer");
-const { io } = require("../socket");
-
 const createOrder = async (req, res) => {
   try {
     const {
