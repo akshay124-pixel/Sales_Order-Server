@@ -16,7 +16,29 @@ const storage = multer.diskStorage({
     const ext = path.extname(file.originalname);
     cb(null, `${randomBytes}${ext}`);
   },
-});
+}); // File filter to validate file types
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = [
+    "application/pdf",
+    "image/png",
+    "image/jpeg",
+    "image/jpg",
+    "application/msword",
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "application/vnd.ms-excel",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ]; // Added Excel types for bulk upload
+  if (allowedTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(
+      new Error(
+        "Invalid file type. Only PDF, PNG, JPG, DOCX, XLS, and XLSX are allowed."
+      ),
+      false
+    );
+  }
+};
 const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
