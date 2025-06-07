@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const XLSX = require("xlsx");
 const { Server } = require("socket.io");
 const { Order, Notification } = require("../Models/Schema");
-
+const { sendMail } = require("../utils/mailer");
 let io;
 
 const initSocket = (server) => {
@@ -58,7 +58,11 @@ const getAllOrders = async (req, res) => {
   }
 };
 
-// Create a new order
+const Order = require("../models/Order");
+const { createNotification } = require("../utils/notifications");
+const { sendMail } = require("../utils/mailer");
+const { io } = require("../socket");
+
 const createOrder = async (req, res) => {
   try {
     const {
@@ -99,19 +103,19 @@ const createOrder = async (req, res) => {
       fulfillingStatus,
     } = req.body;
 
-    // Validate required fields
+    // Required fields check
     if (orderType === "B2G" && !gemOrderNumber) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing GEM Order Number",
-      });
+      return res
+        .status(400)
+        .json({ success: false, error: "Missing GEM Order Number" });
     }
+
     if (orderType === "Demo" && !demoDate) {
-      return res.status(400).json({
-        success: false,
-        error: "Missing Demo Date",
-      });
+      return res
+        .status(400)
+        .json({ success: false, error: "Missing Demo Date" });
     }
+
     if (!paymentTerms && orderType !== "Demo") {
       return res.status(400).json({
         success: false,
@@ -119,14 +123,14 @@ const createOrder = async (req, res) => {
       });
     }
 
-    // Set default fulfillingStatus
+    // Default fulfilling status
     const computedFulfillingStatus =
       fulfillingStatus ||
       (orderType === "Demo" || dispatchFrom !== "Morinda"
         ? "Fulfilled"
         : "Not Fulfilled");
 
-    // Validate dispatchFrom
+    // Validate dispatch location
     const validDispatchLocations = [
       "Patna",
       "Bareilly",
@@ -138,13 +142,12 @@ const createOrder = async (req, res) => {
       "Rajasthan",
     ];
     if (dispatchFrom && !validDispatchLocations.includes(dispatchFrom)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid dispatchFrom value",
-      });
+      return res
+        .status(400)
+        .json({ success: false, error: "Invalid dispatchFrom value" });
     }
 
-    // Validate products
+    // Product validation and normalization
     for (const product of products) {
       if (
         !product.productType ||
@@ -158,6 +161,7 @@ const createOrder = async (req, res) => {
           details: "Each product must have productType, qty, gst, and warranty",
         });
       }
+
       if (
         isNaN(Number(product.qty)) ||
         Number(product.qty) <= 0 ||
@@ -172,6 +176,7 @@ const createOrder = async (req, res) => {
             "qty must be positive, unitPrice must be non-negative, and gst must be valid",
         });
       }
+
       if (
         product.productType === "IFPD" &&
         (!product.modelNos || !product.brand)
@@ -181,7 +186,7 @@ const createOrder = async (req, res) => {
           error: "Model Numbers and Brand are required for IFPD products",
         });
       }
-      // Set default warranty
+
       product.warranty =
         product.warranty ||
         (orderType === "B2G"
@@ -189,6 +194,7 @@ const createOrder = async (req, res) => {
           : product.productType === "IFPD" && product.brand === "Promark"
           ? "3 Years"
           : "1 Year");
+
       product.serialNos = Array.isArray(product.serialNos)
         ? product.serialNos
         : [];
@@ -200,7 +206,7 @@ const createOrder = async (req, res) => {
       product.brand = product.brand || "";
     }
 
-    // Calculate total
+    // Calculate totals
     const calculatedTotal =
       products.reduce((sum, product) => {
         const qty = Number(product.qty) || 0;
@@ -215,14 +221,14 @@ const createOrder = async (req, res) => {
     const calculatedPaymentDue =
       calculatedTotal - Number(paymentCollected || 0);
 
-    // Format date and time
+    // Date formatting
     const formatDateTime = (dateStr) => {
       if (!dateStr) return null;
       const date = new Date(dateStr);
       return isNaN(date.getTime()) ? null : date;
     };
 
-    // Create order
+    // Create new order
     const order = new Order({
       soDate: formatDateTime(new Date()),
       name,
@@ -270,7 +276,42 @@ const createOrder = async (req, res) => {
     // Save order
     const savedOrder = await order.save();
 
-    // Create and save notification
+    // Send confirmation email
+    try {
+      const subject = `Order Confirmation - Order #${
+        savedOrder.orderId || savedOrder._id
+      }`;
+      const text = `
+Dear ${customername || "Customer"},
+
+Thank you for placing your order with us. Below are your order details:
+
+Order ID: ${savedOrder.orderId || savedOrder._id}
+Order Type: ${orderType}
+Total: ₹${savedOrder.total}
+Date: ${new Date(savedOrder.soDate).toLocaleString("en-IN")}
+Dispatch From: ${dispatchFrom}
+
+Products:
+${products
+  .map(
+    (p, i) =>
+      `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
+        p.unitPrice
+      }, GST: ${p.gst}, Brand: ${p.brand}`
+  )
+  .join("\n")}
+
+Thank you for your business.
+– Promark Tech Solutions
+      `;
+
+      await sendMail(customerEmail, subject, text);
+    } catch (mailErr) {
+      console.error("Mail sending failed:", mailErr.message);
+    }
+
+    // Create and emit notification
     const notification = createNotification(
       req,
       savedOrder,
@@ -278,7 +319,6 @@ const createOrder = async (req, res) => {
     );
     await notification.save();
 
-    // Emit notification
     io.to("global").emit("newOrder", {
       _id: savedOrder._id,
       customername: savedOrder.customername,
@@ -297,13 +337,12 @@ const createOrder = async (req, res) => {
         details: messages,
       });
     }
-    res.status(500).json({
-      success: false,
-      error: "Server error",
-      details: error.message,
-    });
+    res
+      .status(500)
+      .json({ success: false, error: "Server error", details: error.message });
   }
 };
+
 // Edit an existing order
 const editEntry = async (req, res) => {
   try {
