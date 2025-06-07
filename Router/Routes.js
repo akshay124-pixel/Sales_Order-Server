@@ -54,12 +54,14 @@ router.get(
   Controller.getInstallationOrders
 );
 router.get("/accounts-orders", verifyToken, Controller.getAccountsOrders);
+
 router.post(
   "/orders",
   verifyToken,
   upload.single("poFile"),
   Controller.createOrder
 );
+
 router.delete("/delete/:id", verifyToken, Controller.DeleteData);
 router.put("/edit/:id", Controller.editEntry);
 router.get("/export", verifyToken, Controller.exportentry);
