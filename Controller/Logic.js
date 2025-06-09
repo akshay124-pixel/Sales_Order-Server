@@ -8,7 +8,7 @@ let io;
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "http://localhost:3000",
+      origin: "https://sales-order-app-eight.vercel.app",
       methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     },
   });
@@ -19,7 +19,34 @@ const initSocket = (server) => {
       console.log("Client disconnected:", socket.id);
     });
   });
+  // NEW: Set up MongoDB change stream to watch for Order collection changes
+  try {
+    const changeStream = Order.watch();
+    changeStream.on("change", (change) => {
+      console.log("Order collection change detected:", change.operationType);
+      // Emit orderUpdate event with relevant data
+      io.to("global").emit("orderUpdate", {
+        operationType: change.operationType,
+        documentId: change.documentKey?._id,
+        // Include full document for insert/update, if available
+        fullDocument: change.fullDocument || null,
+      });
+    });
+
+    // Handle change stream errors
+    changeStream.on("error", (error) => {
+      console.error("Change stream error:", error);
+    });
+
+    // Handle change stream close
+    changeStream.on("close", () => {
+      console.log("Change stream closed");
+    });
+  } catch (error) {
+    console.error("Error setting up change stream:", error);
+  }
 };
+
 // Shared function to create notifications
 function createNotification(req, order, action) {
   const username = req.user?.username || "User";
