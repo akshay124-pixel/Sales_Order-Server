@@ -370,22 +370,13 @@ Thank you for your business.
 };
 
 // Edit an existing order
-// Edit an existing order
 const editEntry = async (req, res) => {
   try {
     const orderId = req.params.id;
     const updateData = req.body;
 
-    // Validate orderId
-    if (!mongoose.Types.ObjectId.isValid(orderId)) {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid order ID",
-      });
-    }
-
     // Log request body for debugging
-    console.log("Edit request body:", JSON.stringify(updateData, null, 2));
+    console.log("Edit request body:", updateData);
 
     // Fetch existing order
     const existingOrder = await Order.findById(orderId);
@@ -483,9 +474,6 @@ const editEntry = async (req, res) => {
               qty: Number(product.qty) || existingProduct.qty || 1,
               unitPrice:
                 Number(product.unitPrice) || existingProduct.unitPrice || 0,
-              serialNos: Array.isArray(product.serialNos)
-                ? product.serialNos
-                : existingProduct.serialNos || [],
               modelNos: Array.isArray(product.modelNos)
                 ? product.modelNos
                 : existingProduct.modelNos || [],
@@ -526,25 +514,8 @@ const editEntry = async (req, res) => {
       }
     }
 
-    // Validate sostatus if provided
-    if (updateFields.sostatus) {
-      const validStatuses = [
-        "Pending for Approval",
-        "Accounts Approved",
-        "Approved",
-        "Order on Hold Due to Low Price",
-      ];
-      if (!validStatuses.includes(updateFields.sostatus)) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid sostatus value",
-          details: `sostatus must be one of: ${validStatuses.join(", ")}`,
-        });
-      }
-    }
-
-    // Automatically set completionStatus and fulfillmentDate
-    if (updateFields.fulfillingStatus === "Fulfilled") {
+    // Automatically set completionStatus to "Complete" if fulfillingStatus is "Fulfilled"
+    if (updateData.fulfillingStatus === "Fulfilled") {
       updateFields.completionStatus = "Complete";
       if (!updateFields.fulfillmentDate) {
         updateFields.fulfillmentDate = new Date();
@@ -569,7 +540,7 @@ const editEntry = async (req, res) => {
     if (!updatedOrder) {
       return res.status(404).json({
         success: false,
-        error: "Order not found after update attempt",
+        error: "Order not found",
       });
     }
 
@@ -619,11 +590,7 @@ ${updatedOrder.products
     (p, i) =>
       `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
         p.unitPrice
-      }, GST: ${p.gst}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${
-        p.spec
-      }, Model: ${p.modelName}, Model Size: ${p.modelSize}, Specifications: ${
-        p.specifications
-      }, Amount: ₹${p.amount}`
+      }, GST: ${p.gst}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${p.spec}`
   )
   .join("\n")}
 
@@ -640,42 +607,39 @@ Thank you for your business.
     }
 
     // Create and save notification
-    const notification = createNotification(req, updatedOrder, "Order updated");
+    const notification = new Notification({
+      message: `Order updated by ${req.user?.username || "Unknown User"} for ${
+        updatedOrder.customername || "Unknown"
+      } (Order ID: ${updatedOrder.orderId || "N/A"})`,
+      timestamp: new Date(),
+      isRead: false,
+      role: "All",
+      userId: req.user?.id || null,
+    });
     await notification.save();
 
-    // Emit notification
+    // Emit notification with standardized structure
+    const notificationData = {
+      id: notification._id.toString(),
+      message: notification.message,
+      timestamp: notification.timestamp.toISOString(),
+      isRead: notification.isRead,
+      role: notification.role,
+    };
+
     io.to("global").emit("updateOrder", {
       _id: updatedOrder._id,
       customername: updatedOrder.customername,
       orderId: updatedOrder.orderId,
-      notification,
+      notification: notificationData,
     });
 
     res.status(200).json({ success: true, data: updatedOrder });
   } catch (error) {
-    console.error("Error in editEntry:", {
-      message: error.message,
-      stack: error.stack,
-      updateData,
-      orderId,
-    });
-    if (error.name === "ValidationError") {
-      const messages = Object.values(error.errors).map((err) => err.message);
-      return res.status(400).json({
-        success: false,
-        error: "Validation failed",
-        details: messages,
-      });
-    }
-    if (error.name === "CastError") {
-      return res.status(400).json({
-        success: false,
-        error: "Invalid order ID format",
-      });
-    }
+    console.error("Error in editEntry:", error);
     res.status(500).json({
       success: false,
-      error: "Failed to update order",
+      error: "Server error",
       details: error.message,
     });
   }
