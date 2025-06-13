@@ -474,6 +474,9 @@ const editEntry = async (req, res) => {
               qty: Number(product.qty) || existingProduct.qty || 1,
               unitPrice:
                 Number(product.unitPrice) || existingProduct.unitPrice || 0,
+              serialNos: Array.isArray(product.serialNos)
+                ? product.serialNos
+                : existingProduct.serialNos || [],
               modelNos: Array.isArray(product.modelNos)
                 ? product.modelNos
                 : existingProduct.modelNos || [],
