@@ -370,6 +370,7 @@ Thank you for your business.
 };
 
 // Edit an existing order
+// Edit an existing order
 const editEntry = async (req, res) => {
   try {
     const orderId = req.params.id;
@@ -384,7 +385,7 @@ const editEntry = async (req, res) => {
     }
 
     // Log request body for debugging
-    console.log("Edit request body:", updateData);
+    console.log("Edit request body:", JSON.stringify(updateData, null, 2));
 
     // Fetch existing order
     const existingOrder = await Order.findById(orderId);
@@ -462,12 +463,67 @@ const editEntry = async (req, res) => {
     const updateFields = {};
     for (const field of allowedFields) {
       if (updateData[field] !== undefined) {
-        // Handle date fields
-        if (
+        if (field === "products") {
+          // Validate and merge products
+          if (!Array.isArray(updateData.products)) {
+            return res.status(400).json({
+              success: false,
+              error: "Products must be an array",
+            });
+          }
+
+          // Map incoming products and merge with existing ones
+          updateFields.products = updateData.products.map((product, index) => {
+            const existingProduct = existingOrder.products[index] || {};
+            return {
+              productType:
+                product.productType || existingProduct.productType || "",
+              size: product.size || existingProduct.size || "N/A",
+              spec: product.spec || existingProduct.spec || "N/A",
+              qty: Number(product.qty) || existingProduct.qty || 1,
+              unitPrice:
+                Number(product.unitPrice) || existingProduct.unitPrice || 0,
+              serialNos: Array.isArray(product.serialNos)
+                ? product.serialNos
+                : existingProduct.serialNos || [],
+              modelNos: Array.isArray(product.modelNos)
+                ? product.modelNos
+                : existingProduct.modelNos || [],
+              gst: product.gst || existingProduct.gst || "18",
+              brand: product.brand || existingProduct.brand || "",
+              warranty:
+                product.warranty || existingProduct.warranty || "1 Year",
+              modelName: product.modelName || existingProduct.modelName || "",
+              modelSize: product.modelSize || existingProduct.modelSize || "",
+              specifications:
+                product.specifications || existingProduct.specifications || "",
+              amount: Number(product.amount) || existingProduct.amount || 0,
+            };
+          });
+
+          // Validate products
+          for (const product of updateFields.products) {
+            if (
+              !product.productType ||
+              product.qty <= 0 ||
+              product.unitPrice < 0 ||
+              !product.gst ||
+              !product.warranty
+            ) {
+              return res.status(400).json({
+                success: false,
+                error: "Invalid product data",
+                details:
+                  "Each product must have valid productType, qty, unitPrice, gst, and warranty",
+              });
+            }
+          }
+        } else if (
           field.endsWith("Date") &&
           updateData[field] &&
           !isNaN(new Date(updateData[field]))
         ) {
+          // Handle date fields
           updateFields[field] = new Date(updateData[field]);
         } else {
           updateFields[field] = updateData[field];
@@ -481,6 +537,7 @@ const editEntry = async (req, res) => {
         "Pending for Approval",
         "Accounts Approved",
         "Approved",
+        "Order on Hold Due to Low Price",
       ];
       if (!validStatuses.includes(updateFields.sostatus)) {
         return res.status(400).json({
@@ -499,11 +556,19 @@ const editEntry = async (req, res) => {
       }
     }
 
+    // Set receiptDate if dispatchStatus is "Delivered"
+    if (
+      updateFields.dispatchStatus === "Delivered" &&
+      !updateFields.receiptDate
+    ) {
+      updateFields.receiptDate = new Date();
+    }
+
     // Update the order
     const updatedOrder = await Order.findByIdAndUpdate(
       orderId,
       { $set: updateFields },
-      { new: true, runValidators: false } // Disable validations to avoid schema issues
+      { new: true, runValidators: true }
     );
 
     if (!updatedOrder) {
@@ -559,7 +624,11 @@ ${updatedOrder.products
     (p, i) =>
       `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
         p.unitPrice
-      }, GST: ${p.gst}, Brand: ${p.brand}`
+      }, GST: ${p.gst}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${
+        p.spec
+      }, Model: ${p.modelName}, Model Size: ${p.modelSize}, Specifications: ${
+        p.specifications
+      }, Amount: ₹${p.amount}`
   )
   .join("\n")}
 
@@ -595,6 +664,14 @@ Thank you for your business.
       updateData,
       orderId,
     });
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((err) => err.message);
+      return res.status(400).json({
+        success: false,
+        error: "Validation failed",
+        details: messages,
+      });
+    }
     if (error.name === "CastError") {
       return res.status(400).json({
         success: false,
