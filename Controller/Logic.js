@@ -493,11 +493,6 @@ const editEntry = async (req, res) => {
               brand: product.brand || existingProduct.brand || "",
               warranty:
                 product.warranty || existingProduct.warranty || "1 Year",
-              modelName: product.modelName || existingProduct.modelName || "",
-              modelSize: product.modelSize || existingProduct.modelSize || "",
-              specifications:
-                product.specifications || existingProduct.specifications || "",
-              amount: Number(product.amount) || existingProduct.amount || 0,
             };
           });
 
