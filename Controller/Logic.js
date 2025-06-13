@@ -593,7 +593,11 @@ ${updatedOrder.products
     (p, i) =>
       `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
         p.unitPrice
-      }, GST: ${p.gst}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${p.spec}`
+      }, GST: ${p.gst}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${
+        p.spec
+      }, Model: ${p.modelName}, Model Size: ${p.modelSize}, Specifications: ${
+        p.specifications
+      }, Amount: ₹${p.amount}`
   )
   .join("\n")}
 
