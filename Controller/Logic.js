@@ -302,41 +302,6 @@ const createOrder = async (req, res) => {
     // Save order
     const savedOrder = await order.save();
 
-    // Send confirmation email
-    try {
-      const subject = `Order Confirmation - Order #${
-        savedOrder.orderId || savedOrder._id
-      }`;
-      const text = `
-Dear ${customername || "Customer"},
-
-Thank you for placing your order with us. Below are your order details:
-
-Order ID: ${savedOrder.orderId || savedOrder._id}
-Order Type: ${orderType}
-Total: ₹${savedOrder.total}
-Date: ${new Date(savedOrder.soDate).toLocaleString("en-IN")}
-Dispatch From: ${dispatchFrom}
-
-Products:
-${products
-  .map(
-    (p, i) =>
-      `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
-        p.unitPrice
-      }, GST: ${p.gst}, Brand: ${p.brand}`
-  )
-  .join("\n")}
-
-Thank you for your business.
-– Promark Tech Solutions
-      `;
-
-      await sendMail(customerEmail, subject, text);
-    } catch (mailErr) {
-      console.error("Mail sending failed:", mailErr.message);
-    }
-
     // Create and emit notification
     const notification = createNotification(
       req,
@@ -545,6 +510,52 @@ const editEntry = async (req, res) => {
         success: false,
         error: "Order not found",
       });
+    }
+    // Send confirmation email if sostatus is updated to "Approved"
+    if (
+      updateFields.sostatus === "Approved" &&
+      updatedOrder.customerEmail &&
+      existingOrder.sostatus !== "Approved"
+    ) {
+      try {
+        const subject = `Order Confirmation - Order #${
+          updatedOrder.orderId || updatedOrder._id
+        }`;
+        const text = `
+Dear ${updatedOrder.customername || "Customer"},
+
+Thank you for placing your order with us. Below are your order details:
+
+Order ID: ${updatedOrder.orderId || updatedOrder._id}
+Order Type: ${updatedOrder.orderType || "N/A"}
+Total: ₹${updatedOrder.total || 0}
+Date: ${
+          updatedOrder.soDate
+            ? new Date(updatedOrder.soDate).toLocaleString("en-IN")
+            : "N/A"
+        }
+Dispatch From: ${updatedOrder.dispatchFrom || "N/A"}
+
+Products:
+${updatedOrder.products
+  .map(
+    (p, i) =>
+      `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
+        p.unitPrice
+      }, GST: ${p.gst}, Brand: ${p.brand}`
+  )
+  .join("\n")}
+
+Thank you for your business.
+– Promark Tech Solutions
+    `;
+        await sendMail(updatedOrder.customerEmail, subject, text);
+      } catch (mailErr) {
+        console.error(
+          "Order confirmation email sending failed:",
+          mailErr.message
+        );
+      }
     }
 
     // Send email if dispatchStatus is updated to "Dispatched" or "Delivered"
