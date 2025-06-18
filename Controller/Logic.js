@@ -1214,11 +1214,10 @@ const getInstallationOrders = async (req, res) => {
 const getAccountsOrders = async (req, res) => {
   try {
     const orders = await Order.find({
-      $or: [
-        { paymentReceived: "Not Received" },
-        { sostatus: { $in: ["Pending for Approval", "Accounts Approved"] } },
-      ],
+      installationStatus: "Completed",
+      paymentReceived: { $ne: "Received" }, // Not equal to "Received"
     }).populate("createdBy", "username email");
+
     res.json({ success: true, data: orders });
   } catch (error) {
     console.error("Error in getAccountsOrders:", error);
@@ -1229,7 +1228,6 @@ const getAccountsOrders = async (req, res) => {
     });
   }
 };
-
 // Fetch production approval orders
 const getProductionApprovalOrders = async (req, res) => {
   try {
