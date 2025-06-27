@@ -1188,17 +1188,27 @@ const getInstallationOrders = async (req, res) => {
   try {
     const orders = await Order.find({
       dispatchStatus: "Delivered",
-      installationStatus: {
-        $in: [
-          "Pending",
-          "In Progress",
-          "Failed",
-          "Hold by Salesperson",
-          "Hold by Customer",
-          "Site Not Ready",
-        ],
-      },
+      $or: [
+        {
+          installationStatus: {
+            $in: ["Pending", "Failed", "Site Not Ready"],
+          },
+        },
+        {
+          installationStatus: "Hold",
+          subinstallationStatus: {
+            $in: ["Hold from Salesperson", "Hold from Customer"],
+          },
+        },
+        {
+          installationStatus: "In Progress",
+          subinstallationStatus: {
+            $in: ["Engineering is Working", "Dealer is Working"],
+          },
+        },
+      ],
     }).populate("createdBy", "username email");
+
     res.json({ success: true, data: orders });
   } catch (error) {
     console.error("Error in getInstallationOrders:", error);

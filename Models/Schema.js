@@ -96,6 +96,17 @@ const orderSchema = new mongoose.Schema(
       type: String,
       default: "Pending",
     },
+
+    subinstallationStatus: {
+      type: String,
+      default: "Pending",
+    },
+    installationStatusDate: {
+      type: Date,
+    },
+    installationeng: {
+      type: String,
+    },
     remarksByInstallation: { type: String, default: "", trim: true },
     dispatchStatus: {
       type: String,
