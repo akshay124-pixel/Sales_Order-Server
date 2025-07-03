@@ -122,6 +122,7 @@ const createOrder = async (req, res) => {
       paymentTerms,
       creditDays,
       dispatchFrom,
+
       fulfillingStatus,
     } = req.body;
     // Handle file upload
@@ -408,6 +409,7 @@ const editEntry = async (req, res) => {
       "sostatus",
       "gemOrderNumber",
       "deliveryDate",
+      "deliveredDate",
       "demoDate",
       "paymentTerms",
       "creditDays",
