@@ -1191,7 +1191,7 @@ const getInstallationOrders = async (req, res) => {
     const orders = await Order.find({
       dispatchStatus: "Delivered",
       installationStatus: {
-        $in: ["Pending", "Site Not Ready", "Hold", "In Progres"],
+        $in: ["Pending", "In Progress", "Site Not Ready", "Hold"],
       },
     }).populate("createdBy", "username email");
 
