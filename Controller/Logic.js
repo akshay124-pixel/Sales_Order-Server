@@ -425,7 +425,11 @@ const editEntry = async (req, res) => {
               spec: product.spec || existingProduct.spec || "N/A",
               qty: Number(product.qty) || existingProduct.qty || 1,
               unitPrice:
-                Number(product.unitPrice) || existingProduct.unitPrice || 0,
+                product.unitPrice !== undefined && product.unitPrice !== ""
+                  ? Number(product.unitPrice)
+                  : existingProduct.unitPrice !== undefined
+                  ? existingProduct.unitPrice
+                  : 0,
               serialNos: Array.isArray(product.serialNos)
                 ? product.serialNos
                 : existingProduct.serialNos || [],
