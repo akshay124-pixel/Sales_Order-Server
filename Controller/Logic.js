@@ -190,21 +190,6 @@ const createOrder = async (req, res) => {
       }
 
       if (
-        isNaN(Number(product.qty)) ||
-        Number(product.qty) <= 0 ||
-        isNaN(Number(product.unitPrice)) ||
-        Number(product.unitPrice) < 0 ||
-        (product.gst !== "including" && isNaN(Number(product.gst)))
-      ) {
-        return res.status(400).json({
-          success: false,
-          error: "Invalid product data",
-          details:
-            "qty must be positive, unitPrice must be non-negative, and gst must be valid",
-        });
-      }
-
-      if (
         product.productType === "IFPD" &&
         (!product.modelNos || !product.brand)
       ) {
