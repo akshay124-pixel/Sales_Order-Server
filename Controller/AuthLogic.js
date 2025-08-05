@@ -1,3 +1,4 @@
+// AuthLogic.js
 const User = require("../Models/Model");
 const bcrypt = require("bcrypt");
 const { generateToken } = require("../utils/config jwt");
@@ -109,17 +110,19 @@ const Login = async (req, res) => {
   }
 };
 
+// Updated ChangePassword Controller
 const ChangePassword = async (req, res) => {
   try {
-    const { currentPassword, newPassword, email } = req.body;
+    const { currentPassword, newPassword } = req.body;
     const userId = req.user.id; // From JWT middleware
 
-    console.log("ChangePassword: Request received", { userId, email });
+    console.log("ChangePassword: Request received", { userId });
 
-    if (!currentPassword || !newPassword || !email) {
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required" });
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: "Current and new password are required",
+      });
     }
 
     // Check if new password is same as current
@@ -149,18 +152,6 @@ const ChangePassword = async (req, res) => {
         .json({ success: false, message: "User not found" });
     }
 
-    // Verify email matches the authenticated user
-    if (user.email !== email) {
-      console.log("ChangePassword: Email mismatch", {
-        providedEmail: email,
-        userEmail: user.email,
-      });
-      return res.status(403).json({
-        success: false,
-        message: "Email does not match authenticated user",
-      });
-    }
-
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       console.log("ChangePassword: Current password incorrect for user", {
@@ -173,7 +164,7 @@ const ChangePassword = async (req, res) => {
 
     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
     user.password = hashedNewPassword;
-    user.lastPasswordChange = new Date(); // Track password change timestamp
+    user.lastPasswordChange = new Date();
     await user.save();
 
     console.log("ChangePassword: Password changed successfully for user", {
@@ -185,7 +176,7 @@ const ChangePassword = async (req, res) => {
     if (io) {
       io.to(userId.toString()).emit("passwordChange", {
         userId,
-        email,
+        email: user.email,
         timestamp: new Date(),
       });
     }
