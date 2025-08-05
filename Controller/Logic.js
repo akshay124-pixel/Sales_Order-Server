@@ -1,3 +1,4 @@
+require("dotenv").config();
 const mongoose = require("mongoose");
 const XLSX = require("xlsx");
 const { Server } = require("socket.io");
@@ -8,7 +9,7 @@ let io;
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: "https://sales-order-app-eight.vercel.app",
+      origin: `${process.env.API_URL}`,
       methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     },
   });

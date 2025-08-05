@@ -1,3 +1,4 @@
+require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 const http = require("http");
@@ -17,7 +18,7 @@ Controller.initSocket(server);
 
 // CORS configuration
 const corsOptions = {
-  origin: "https://sales-order-app-eight.vercel.app",
+  origin: `${process.env.API_URL}`,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   optionsSuccessStatus: 200,
