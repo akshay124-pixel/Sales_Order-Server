@@ -9,7 +9,7 @@ let io;
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: `${process.env.API_URL}`,
+      origin: process.env.API_URL,
       methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     },
   });

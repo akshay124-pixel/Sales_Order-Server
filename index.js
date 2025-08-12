@@ -18,7 +18,7 @@ Controller.initSocket(server);
 
 // CORS configuration
 const corsOptions = {
-  origin: `${process.env.API_URL}`,
+  origin: process.env.API_URL,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
   optionsSuccessStatus: 200,
