@@ -1,4 +1,3 @@
-require("dotenv").config();
 const mongoose = require("mongoose");
 const XLSX = require("xlsx");
 const { Server } = require("socket.io");
