@@ -436,6 +436,10 @@ const editEntry = async (req, res) => {
               modelNos: Array.isArray(product.modelNos)
                 ? product.modelNos
                 : existingProduct.modelNos || [],
+              productCode: Array.isArray(product.productCode)
+                ? product.productCode
+                : existingProduct.productCode || [],
+
               gst: product.gst || existingProduct.gst || "18",
               brand: product.brand || existingProduct.brand || "",
               warranty:

@@ -13,6 +13,7 @@ const productSchema = new mongoose.Schema({
   unitPrice: { type: Number, required: true },
   serialNos: [{ type: String, trim: true }],
   modelNos: [{ type: String, trim: true }],
+  productCode: [{ type: String, trim: true }],
   gst: {
     type: String,
     default: "18",
