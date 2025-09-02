@@ -34,6 +34,11 @@ const userSchema = new mongoose.Schema({
     default: "Sales",
     required: true,
   },
+  assignedToLeader: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
+    default: null,
+  },
 });
 
 const User = mongoose.model("User", userSchema);
