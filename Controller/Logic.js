@@ -91,10 +91,13 @@ const getAllOrders = async (req, res) => {
       };
     }
 
-    const orders = await Order.find(query).populate(
-      "createdBy assignedTo",
-      "username email"
-    );
+    const orders = await Order.find(query)
+      .populate({
+        path: "createdBy",
+        select: "username email assignedToLeader",
+        populate: { path: "assignedToLeader", select: "username" },
+      })
+      .populate({ path: "assignedTo", select: "username email" });
     res.json(orders);
   } catch (error) {
     console.error("Error in getAllOrders:", error.message);
