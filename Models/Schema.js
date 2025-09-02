@@ -79,7 +79,7 @@ const orderSchema = new mongoose.Schema(
       enum: ["Self-Pickup", "To Pay", "Including", "Extra"],
       default: "Extra",
     },
-    actualFreight: { type: Number, min: 0 }, // New field
+    actualFreight: { type: Number, min: 0 },
     installchargesstatus: {
       type: String,
       enum: ["To Pay", "Including", "Extra"],
@@ -94,17 +94,9 @@ const orderSchema = new mongoose.Schema(
     deliveryDate: { type: Date },
     deliveredDate: { type: Date },
     installation: { type: String, default: "N/A", trim: true },
-    installationStatus: {
-      type: String,
-      default: "Pending",
-    },
-
-    installationStatusDate: {
-      type: Date,
-    },
-    installationeng: {
-      type: String,
-    },
+    installationStatus: { type: String, default: "Pending" },
+    installationStatusDate: { type: Date },
+    installationeng: { type: String },
     remarksByInstallation: { type: String, default: "", trim: true },
     dispatchStatus: {
       type: String,
@@ -180,16 +172,16 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    assignedTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }], // Added for team access
   },
   { timestamps: true }
 );
 
-// Indexes for performance
-orderSchema.index({ orderId: 1 });
+// Removed orderSchema.index({ orderId: 1 }); to avoid duplicate index warning
 orderSchema.index({ soDate: 1 });
 orderSchema.index({ createdBy: 1 });
+orderSchema.index({ assignedTo: 1 }); // Index for team access queries
 
-// Auto-generate orderId for new orders
 orderSchema.pre("save", async function (next) {
   if (this.isNew && !this.orderId) {
     try {
@@ -207,6 +199,7 @@ orderSchema.pre("save", async function (next) {
     next();
   }
 });
+
 const notificationSchema = new mongoose.Schema({
   message: { type: String, required: true },
   timestamp: { type: Date, default: Date.now },

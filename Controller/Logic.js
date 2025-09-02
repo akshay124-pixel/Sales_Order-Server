@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const XLSX = require("xlsx");
 const { Server } = require("socket.io");
+const User = require("../Models/Model");
 const { Order, Notification } = require("../Models/Schema");
 const { sendMail } = require("../utils/mailer");
 let io;
@@ -64,20 +65,36 @@ function createNotification(req, order, action) {
 // Get all orders
 const getAllOrders = async (req, res) => {
   try {
-    const { role, id } = req.user;
-    let orders;
+    const userId = req.user.id;
+    const userRole = req.user.role;
 
-    if (role === "Admin") {
-      orders = await Order.find().populate("createdBy", "username email");
-    } else if (role === "Sales") {
-      orders = await Order.find({ createdBy: id }).populate(
-        "createdBy",
-        "username email"
-      );
+    let query = {};
+
+    if (userRole === "Admin") {
+      // Admin can see all orders
+      query = {};
     } else {
-      orders = await Order.find().populate("createdBy", "username email");
+      // For Sales users, get their own orders plus their team members' orders
+      const teamMembers = await User.find({ assignedToLeader: userId }).select(
+        "_id"
+      );
+      const teamMemberIds = teamMembers.map((member) => member._id);
+
+      // Include the leader's own ID in the list
+      const allUserIds = [userId, ...teamMemberIds];
+
+      query = {
+        $or: [
+          { createdBy: { $in: allUserIds } },
+          { assignedTo: { $in: allUserIds } },
+        ],
+      };
     }
 
+    const orders = await Order.find(query).populate(
+      "createdBy assignedTo",
+      "username email"
+    );
     res.json(orders);
   } catch (error) {
     console.error("Error in getAllOrders:", error.message);
@@ -921,7 +938,19 @@ const exportentry = async (req, res) => {
     if (role === "Admin") {
       orders = await Order.find().lean();
     } else if (role === "Sales") {
-      orders = await Order.find({ createdBy: id }).lean();
+      // For Sales users, get their own orders plus their team members' orders
+      const teamMembers = await User.find({ assignedToLeader: id }).select(
+        "_id"
+      );
+      const teamMemberIds = teamMembers.map((member) => member._id);
+      const allUserIds = [id, ...teamMemberIds];
+
+      orders = await Order.find({
+        $or: [
+          { createdBy: { $in: allUserIds } },
+          { assignedTo: { $in: allUserIds } },
+        ],
+      }).lean();
     } else {
       orders = await Order.find().lean();
     }
@@ -1273,7 +1302,7 @@ const getProductionOrders = async (req, res) => {
 };
 
 // Notifictions
-// Fetch notifications
+
 const getNotifications = async (req, res) => {
   try {
     if (!req.user || !req.user.id) {
@@ -1333,14 +1362,167 @@ const clearNotifications = async (req, res) => {
     });
   }
 };
+
+// Assign user to team (fixed notification usage)
+const getCurrentUser = async (req, res) => {
+  try {
+    console.log("Attempting to fetch user with ID:", req.user.id); // Debug log
+    const user = await User.findById(req.user.id).select("-password");
+    if (!user) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    res.json({ success: true, data: user });
+  } catch (error) {
+    console.error("Error fetching current user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch current user",
+      error: error.message,
+    });
+  }
+};
+
+// Fixed fetchAvailableUsers function
+const fetchAvailableUsers = async (req, res) => {
+  try {
+    console.log("Fetching available users for role Sales and Admin"); // Debug log
+    const users = await User.find({
+      assignedToLeader: null,
+      _id: { $ne: req.user.id }, // Changed from req.user.userId
+      role: { $in: ["Sales", "Admin"] }, // Modified to include both Sales and Admin roles
+    }).select("username email");
+    res.json({ success: true, data: users });
+  } catch (error) {
+    console.error("Error fetching available users:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch available users",
+      error: error.message,
+    });
+  }
+};
+
+// Fixed fetchMyTeam function
+const fetchMyTeam = async (req, res) => {
+  try {
+    console.log("Fetching team members for leader ID:", req.user.id); // Debug log
+    const team = await User.find({ assignedToLeader: req.user.id })
+      .select("username email assignedToLeader")
+      .populate("assignedToLeader", "username");
+    res.json({ success: true, data: team });
+  } catch (error) {
+    console.error("Error fetching team members:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch team members",
+      error: error.message,
+    });
+  }
+};
+
+// Fixed assignUser function
+const assignUser = async (req, res) => {
+  const { userId } = req.body;
+  try {
+    console.log("Assigning user ID:", userId, "by leader ID:", req.user.id); // Debug log
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    if (targetUser.assignedToLeader) {
+      return res
+        .status(400)
+        .json({ success: false, message: "User already assigned to a team" });
+    }
+    if (targetUser._id.equals(req.user.id)) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Cannot assign yourself" });
+    }
+    targetUser.assignedToLeader = req.user.id;
+    await targetUser.save();
+
+    // Emit socket event
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("teamUpdate", {
+        userId: targetUser._id,
+        leaderId: req.user.id,
+        action: "assign",
+      });
+    }
+
+    res.json({ success: true, message: "User assigned successfully" });
+  } catch (error) {
+    console.error("Error assigning user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to assign user",
+      error: error.message,
+    });
+  }
+};
+
+// Fixed unassignUser function
+const unassignUser = async (req, res) => {
+  const { userId } = req.body;
+  try {
+    console.log("Unassigning user ID:", userId, "by leader ID:", req.user.id); // Debug log
+    const targetUser = await User.findById(userId);
+    if (!targetUser) {
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
+    }
+    if (
+      !targetUser.assignedToLeader ||
+      !targetUser.assignedToLeader.equals(req.user.id)
+    ) {
+      return res.status(403).json({
+        success: false,
+        message: "You are not the leader of this user",
+      });
+    }
+    targetUser.assignedToLeader = null;
+    await targetUser.save();
+
+    // Emit socket event
+    const io = req.app.get("io");
+    if (io) {
+      io.emit("teamUpdate", {
+        userId: targetUser._id,
+        leaderId: req.user.id,
+        action: "unassign",
+      });
+    }
+
+    res.json({ success: true, message: "User unassigned successfully" });
+  } catch (error) {
+    console.error("Error unassigning user:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to unassign user",
+      error: error.message,
+    });
+  }
+};
 module.exports = {
   initSocket,
+  unassignUser,
+  assignUser,
+  fetchMyTeam,
+  fetchAvailableUsers,
   getAllOrders,
   createOrder,
   editEntry,
   DeleteData,
   bulkUploadOrders,
   exportentry,
+  getCurrentUser,
   getFinishedGoodsOrders,
   getVerificationOrders,
   getProductionApprovalOrders,

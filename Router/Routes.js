@@ -86,6 +86,15 @@ router.get(
 );
 router.get("/get-bill-orders", verifyToken, Controller.getBillOrders);
 router.get("/notifications", verifyToken, Controller.getNotifications);
+router.post("/assign-user", verifyToken, Controller.assignUser);
+router.post("/unassign-user", verifyToken, Controller.unassignUser);
 router.post("/mark-read", verifyToken, Controller.markNotificationsRead);
 router.delete("/clear", verifyToken, Controller.clearNotifications);
+router.get("/current-user", verifyToken, Controller.getCurrentUser);
+router.get(
+  "/fetch-available-users",
+  verifyToken,
+  Controller.fetchAvailableUsers
+);
+router.get("/fetch-my-team", verifyToken, Controller.fetchMyTeam);
 module.exports = router;
