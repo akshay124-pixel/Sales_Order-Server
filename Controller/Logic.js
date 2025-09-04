@@ -70,7 +70,7 @@ const getAllOrders = async (req, res) => {
 
     let query = {};
 
-    if (userRole === "Admin") {
+    if (userRole === "Admin" || userRole === "SuperAdmin") {
       // Admin can see all orders
       query = {};
     } else {
@@ -938,7 +938,7 @@ const exportentry = async (req, res) => {
     const { role, id } = req.user;
     let orders;
 
-    if (role === "Admin") {
+    if (role === "Admin" || role === "SuperAdmin") {
       orders = await Order.find().lean();
     } else if (role === "Sales") {
       // For Sales users, get their own orders plus their team members' orders
@@ -1394,7 +1394,7 @@ const fetchAvailableUsers = async (req, res) => {
     const users = await User.find({
       assignedToLeader: null,
       _id: { $ne: req.user.id }, // Changed from req.user.userId
-      role: { $in: ["Sales", "Admin"] }, // Modified to include both Sales and Admin roles
+      role: { $in: ["Sales", "Admin", "SuperAdmin"] }, // Modified to include both Sales and Admin roles
     }).select("username email");
     res.json({ success: true, data: users });
   } catch (error) {
