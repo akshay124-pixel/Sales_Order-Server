@@ -564,36 +564,69 @@ The Promark Tech Solutions Crew
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-              body { font-family: 'Poppins', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
-              .container { max-width: 700px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
-              .hero { background: linear-gradient(135deg, #007bff, #00d4ff); padding: 50px 20px; text-align: center; position: relative; }
-              .hero h1 { color: #ffffff; font-size: 36px; font-weight: 700; margin: 0; text-shadow: 0 3px 6px rgba(0,0,0,0.3); letter-spacing: 1px; }
-              .hero p { color: #ffffff; font-size: 18px; opacity: 0.9; margin: 15px 0; }
-              .content { padding: 40px; background-color: #ffffff; }
-              .content h2 { color: #1a1a1a; font-size: 26px; font-weight: 600; margin-bottom: 20px; }
-              .content p { color: #444444; font-size: 16px; line-height: 1.8; margin: 0 0 25px; }
-              .highlight { background: linear-gradient(135deg, #e6f3ff, #d9e9ff); padding: 20px; border-radius: 15px; text-align: center; font-size: 18px; font-weight: 500; color: #333; }
-              .products { background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 25px; border-radius: 15px; border: 1px solid #dee2e6; }
+              @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+              body { font-family: 'Poppins', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; line-height: 1.6; }
+              .container { max-width: 720px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+              .hero { background: linear-gradient(135deg, #1e3a8a, #3b82f6); padding: 60px 20px; text-align: center; position: relative; }
+              .hero::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png'); opacity: 0.1; }
+              .hero h1 { color: #ffffff; font-size: 38px; font-weight: 700; margin: 0; text-shadow: 0 3px 6px rgba(0,0,0,0.3); letter-spacing: 1.2px; }
+              .hero p { color: #ffffff; font-size: 20px; opacity: 0.95; margin: 15px 0; font-weight: 400; }
+              .content { padding: 50px 30px; background-color: #ffffff; }
+              .content h2 { color: #1f2937; font-size: 28px; font-weight: 600; margin-bottom: 20px; }
+              .content p { color: #4b5563; font-size: 16px; line-height: 1.9; margin: 0 0 25px; }
+              .highlight { background: linear-gradient(135deg, #e0f2fe, #bfdbfe); padding: 25px; border-radius: 16px; text-align: center; font-size: 18px; font-weight: 500; color: #1f2937; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+              .products { background: linear-gradient(135deg, #f9fafb, #e5e7eb); padding: 30px; border-radius: 16px; border: 1px solid #d1d5db; }
               .products ul { list-style: none; padding: 0; margin: 0; }
-              .products li { font-size: 16px; color: #333333; margin-bottom: 15px; display: flex; align-items: center; transition: transform 0.3s; }
-              .products li:hover { transform: translateX(10px); }
-              .products li::before { content: '★'; color: #ffc107; margin-right: 12px; font-size: 18px; }
-              .cta-button { display: inline-block; padding: 18px 36px; background: linear-gradient(135deg, #28a745, #34c759); color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; margin: 25px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease; }
-              .cta-button:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.4); background: linear-gradient(135deg, #34c759, #28a745); }
-              .footer { text-align: center; padding: 30px; background: linear-gradient(135deg, #f1f3f5, #e9ecef); color: #6c757d; font-size: 14px; }
-              .footer a { color: #007bff; text-decoration: none; font-weight: 600; }
+              .products li { font-size: 16px; color: #1f2937; margin-bottom: 16px; display: flex; align-items: center; transition: transform 0.3s ease; }
+              .products li:hover { transform: translateX(12px); }
+              .products li::before { content: '✨'; color: #f59e0b; margin-right: 12px; font-size: 20px; }
+              .cta-button { 
+                display: inline-block; 
+                padding: 20px 40px; 
+                background: linear-gradient(135deg, #22c55e, #16a34a); 
+                color: #000000; /* Changed text color to black for Contact Us Now button */
+                text-decoration: none; 
+                border-radius: 50px; 
+                font-size: 18px; 
+                font-weight: 600; 
+                margin: 30px 0; 
+                box-shadow: 0 6px 12px rgba(0,0,0,0.2); 
+                transition: all 0.3s ease; 
+                position: relative; 
+                overflow: hidden; 
+              }
+              .cta-button::after { 
+                content: ''; 
+                position: absolute; 
+                top: 0; 
+                left: -100%; 
+                width: 100%; 
+                height: 100%; 
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); 
+                transition: 0.5s; 
+              }
+              .cta-button:hover::after { left: 100%; }
+              .cta-button:hover { 
+                transform: translateY(-4px); 
+                box-shadow: 0 8px 16px rgba(0,0,0,0.3); 
+                background: linear-gradient(135deg, #16a34a, #22c55e); 
+              }
+              .footer { text-align: center; padding: 40px; background: linear-gradient(135deg, #f3f4f6, #e5e7eb); color: #6b7280; font-size: 14px; }
+              .footer a { color: #1e3a8a; text-decoration: none; font-weight: 600; }
               .footer a:hover { text-decoration: underline; }
               .social-icons { margin-top: 20px; }
-              .social-icons a { margin: 0 12px; display: inline-block; transition: transform 0.3s; }
-              .social-icons a:hover { transform: scale(1.2); }
-              .social-icons img { width: 28px; height: 28px; }
+              .social-icons a { margin: 0 15px; display: inline-block; transition: transform 0.3s ease; }
+              .social-icons a:hover { transform: scale(1.3); }
+              .social-icons img { width: 30px; height: 30px; }
               @media (max-width: 600px) {
-                .container { margin: 15px; }
-                .hero h1 { font-size: 28px; }
+                .container { margin: 20px; }
+                .hero h1 { font-size: 30px; }
                 .hero p { font-size: 16px; }
-                .content { padding: 25px; }
-                .content h2 { font-size: 22px; }
-                .cta-button { padding: 14px 28px; font-size: 16px; }
+                .content { padding: 30px; }
+                .content h2 { font-size: 24px; }
+                .cta-button { padding: 16px 32px; font-size: 16px; }
+                .products { padding: 20px; }
+                .highlight { padding: 20px; }
               }
             </style>
           </head>
@@ -603,11 +636,11 @@ The Promark Tech Solutions Crew
                 <h1>Order #${
                   updatedOrder.orderId || updatedOrder._id
                 } Approved!</h1>
-                <p>Your Journey with Promark Tech Solutions Begins!</p>
+                <p>Kickstarting Your Journey with Promark Tech Solutions!</p>
               </div>
               <div class="content">
                 <h2>Dear ${updatedOrder.customername || "Customer"},</h2>
-                <p>We're absolutely thrilled to confirm that your order has been approved! You're one step closer to experiencing the awesomeness of your selected products with Promark Tech Solutions.</p>
+                <p>We're over the moon to announce that your order has been officially approved! You're about to experience the magic of your selected products with Promark Tech Solutions.</p>
                 <div class="products">
                   <ul>
                     ${updatedOrder.products
@@ -621,16 +654,16 @@ The Promark Tech Solutions Crew
                 <div class="highlight">
                   <p>Total: ₹${updatedOrder.total || 0}</p>
                 </div>
-                <p>Let's make it happen! Reach out to us to dive into the next steps and unlock the full potential of your order.</p>
+                <p>Ready to dive into the next steps? Our team is here to make your experience seamless and extraordinary. Let's make it happen!</p>
                 <a href="mailto:support@promarktechsolutions.com" class="cta-button">Contact Us Now</a>
               </div>
               <div class="footer">
-                <p>Cheers,<br/>The Promark Tech Solutions Crew</p>
+                <p>With enthusiasm,<br/>The Promark Tech Solutions Crew</p>
                 <p>&copy; 2025 <a href="https://promarktechsolutions.com">Promark Tech Solutions</a>. All rights reserved.</p>
                 <div class="social-icons">
-                  <a href="https://twitter.com/promarktech"><img src="https://img.icons8.com/color/28/000000/twitter.png" alt="Twitter"></a>
-                  <a href="https://linkedin.com/company/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/linkedin.png" alt="LinkedIn"></a>
-                  <a href="https://instagram.com/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/instagram.png" alt="Instagram"></a>
+                  <a href="https://twitter.com/promarktech"><img src="https://img.icons8.com/color/30/000000/twitter.png" alt="Twitter"></a>
+                  <a href="https://linkedin.com/company/promarktechsolutions"><img src="https://img.icons8.com/color/30/000000/linkedin.png" alt="LinkedIn"></a>
+                  <a href="https://instagram.com/promarktechsolutions"><img src="https://img.icons8.com/color/30/000000/instagram.png" alt="Instagram"></a>
                 </div>
               </div>
             </div>
@@ -705,36 +738,69 @@ The Promark Tech Solutions Crew
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1.0">
             <style>
-              body { font-family: 'Poppins', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
-              .container { max-width: 700px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
-              .hero { background: linear-gradient(135deg, #ff4b2b, #ff8e53); padding: 50px 20px; text-align: center; position: relative; }
-              .hero h1 { color: #ffffff; font-size: 36px; font-weight: 700; margin: 0; text-shadow: 0 3px 6px rgba(0,0,0,0.3); letter-spacing: 1px; }
-              .hero p { color: #ffffff; font-size: 18px; opacity: 0.9; margin: 15px 0; }
-              .content { padding: 40px; background-color: #ffffff; }
-              .content h2 { color: #1a1a1a; font-size: 26px; font-weight: 600; margin-bottom: 20px; }
-              .content p { color: #444444; font-size: 16px; line-height: 1.8; margin: 0 0 25px; }
-              .highlight { background: linear-gradient(135deg, #ffe8e0, #fff3e0); padding: 20px; border-radius: 15px; text-align: center; font-size: 18px; font-weight: 500; color: #333; }
-              .products { background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 25px; border-radius: 15px; border: 1px solid #dee2e6; }
+              @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+              body { font-family: 'Poppins', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; line-height: 1.6; }
+              .container { max-width: 720px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+              .hero { background: linear-gradient(135deg, #dc2626, #f87171); padding: 60px 20px; text-align: center; position: relative; }
+              .hero::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png'); opacity: 0.1; }
+              .hero h1 { color: #ffffff; font-size: 38px; font-weight: 700; margin: 0; text-shadow: 0 3px 6px rgba(0,0,0,0.3); letter-spacing: 1.2px; }
+              .hero p { color: #ffffff; font-size: 20px; opacity: 0.95; margin: 15px 0; font-weight: 400; }
+              .content { padding: 50px 30px; background-color: #ffffff; }
+              .content h2 { color: #1f2937; font-size: 28px; font-weight: 600; margin-bottom: 20px; }
+              .content p { color: #4b5563; font-size: 16px; line-height: 1.9; margin: 0 0 25px; }
+              .highlight { background: linear-gradient(135deg, #fee2e2, #fef3c7); padding: 25px; border-radius: 16px; text-align: center; font-size: 18px; font-weight: 500; color: #1f2937; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+              .products { background: linear-gradient(135deg, #f9fafb, #e5e7eb); padding: 30px; border-radius: 16px; border: 1px solid #d1d5db; }
               .products ul { list-style: none; padding: 0; margin: 0; }
-              .products li { font-size: 16px; color: #333333; margin-bottom: 15px; display: flex; align-items: center; transition: transform 0.3s; }
-              .products li:hover { transform: translateX(10px); }
-              .products li::before { content: '★'; color: #ffc107; margin-right: 12px; font-size: 18px; }
-              .cta-button { display: inline-block; padding: 18px 36px; background: linear-gradient(135deg, #28a745, #34c759); color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; margin: 25px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease; }
-              .cta-button:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.4); background: linear-gradient(135deg, #34c759, #28a745); }
-              .footer { text-align: center; padding: 30px; background: linear-gradient(135deg, #f1f3f5, #e9ecef); color: #6c757d; font-size: 14px; }
-              .footer a { color: #ff4b2b; text-decoration: none; font-weight: 600; }
+              .products li { font-size: 16px; color: #1f2937; margin-bottom: 16px; display: flex; align-items: center; transition: transform 0.3s ease; }
+              .products li:hover { transform: translateX(12px); }
+              .products li::before { content: '✨'; color: #f59e0b; margin-right: 12px; font-size: 20px; }
+              .cta-button { 
+                display: inline-block; 
+                padding: 20px 40px; 
+                background: linear-gradient(135deg, #22c55e, #16a34a); 
+                color: #000000; /* Changed text color to black for Get in Touch button */
+                text-decoration: none; 
+                border-radius: 50px; 
+                font-size: 18px; 
+                font-weight: 600; 
+                margin: 30px 0; 
+                box-shadow: 0 6px 12px rgba(0,0,0,0.2); 
+                transition: all 0.3s ease; 
+                position: relative; 
+                overflow: hidden; 
+              }
+              .cta-button::after { 
+                content: ''; 
+                position: absolute; 
+                top: 0; 
+                left: -100%; 
+                width: 100%; 
+                height: 100%; 
+                background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); 
+                transition: 0.5s; 
+              }
+              .cta-button:hover::after { left: 100%; }
+              .cta-button:hover { 
+                transform: translateY(-4px); 
+                box-shadow: 0 8px 16px rgba(0,0,0,0.3); 
+                background: linear-gradient(135deg, #16a34a, #22c55e); 
+              }
+              .footer { text-align: center; padding: 40px; background: linear-gradient(135deg, #f3f4f6, #e5e7eb); color: #6b7280; font-size: 14px; }
+              .footer a { color: #dc2626; text-decoration: none; font-weight: 600; }
               .footer a:hover { text-decoration: underline; }
               .social-icons { margin-top: 20px; }
-              .social-icons a { margin: 0 12px; display: inline-block; transition: transform 0.3s; }
-              .social-icons a:hover { transform: scale(1.2); }
-              .social-icons img { width: 28px; height: 28px; }
+              .social-icons a { margin: 0 15px; display: inline-block; transition: transform 0.3s ease; }
+              .social-icons a:hover { transform: scale(1.3); }
+              .social-icons img { width: 30px; height: 30px; }
               @media (max-width: 600px) {
-                .container { margin: 15px; }
-                .hero h1 { font-size: 28px; }
+                .container { margin: 20px; }
+                .hero h1 { font-size: 30px; }
                 .hero p { font-size: 16px; }
-                .content { padding: 25px; }
-                .content h2 { font-size: 22px; }
-                .cta-button { padding: 14px 28px; font-size: 16px; }
+                .content { padding: 30px; }
+                .content h2 { font-size: 24px; }
+                .cta-button { padding: 16px 32px; font-size: 16px; }
+                .products { padding: 20px; }
+                .highlight { padding: 20px; }
               }
             </style>
           </head>
@@ -744,11 +810,11 @@ The Promark Tech Solutions Crew
                 <h1>Order #${updatedOrder.orderId || updatedOrder._id} ${
           statusText.charAt(0).toUpperCase() + statusText.slice(1)
         }!</h1>
-                <p>Exciting Update from Promark Tech Solutions!</p>
+                <p>Your Next Step with Promark Tech Solutions!</p>
               </div>
               <div class="content">
                 <h2>Dear ${updatedOrder.customername || "Customer"},</h2>
-                <p>Awesome news! Your order has been ${statusText}, bringing you closer to enjoying your products from Promark Tech Solutions. Here's what's in your order:</p>
+                <p>Fantastic news! Your order has been ${statusText}, bringing you one step closer to enjoying the excellence of Promark Tech Solutions. Here's what's in your order:</p>
                 <div class="products">
                   <ul>
                     ${updatedOrder.products
@@ -781,16 +847,16 @@ The Promark Tech Solutions Crew
                   <p>Transporter: ${updatedOrder.transporter || "N/A"}</p>
                   <p>Docket No: ${updatedOrder.docketNo || "N/A"}</p>
                 </div>
-                <p>We're here to make your experience unforgettable! Reach out if you have any questions or need further assistance.</p>
+                <p>We're here to ensure your experience is nothing short of spectacular! Reach out with any questions or to explore what's next.</p>
                 <a href="mailto:support@promarktechsolutions.com" class="cta-button">Get in Touch</a>
               </div>
               <div class="footer">
-                <p>Cheers,<br/>The Promark Tech Solutions Crew</p>
+                <p>With enthusiasm,<br/>The Promark Tech Solutions Crew</p>
                 <p>&copy; 2025 <a href="https://promarktechsolutions.com">Promark Tech Solutions</a>. All rights reserved.</p>
                 <div class="social-icons">
-                  <a href="https://twitter.com/promarktech"><img src="https://img.icons8.com/color/28/000000/twitter.png" alt="Twitter"></a>
-                  <a href="https://linkedin.com/company/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/linkedin.png" alt="LinkedIn"></a>
-                  <a href="https://instagram.com/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/instagram.png" alt="Instagram"></a>
+                  <a href="https://twitter.com/promarktech"><img src="https://img.icons8.com/color/30/000000/twitter.png" alt="Twitter"></a>
+                  <a href="https://linkedin.com/company/promarktechsolutions"><img src="https://img.icons8.com/color/30/000000/linkedin.png" alt="LinkedIn"></a>
+                  <a href="https://instagram.com/promarktechsolutions"><img src="https://img.icons8.com/color/30/000000/instagram.png" alt="Instagram"></a>
                 </div>
               </div>
             </div>
