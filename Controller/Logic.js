@@ -459,7 +459,6 @@ const editEntry = async (req, res) => {
               productCode: Array.isArray(product.productCode)
                 ? product.productCode
                 : existingProduct.productCode || [],
-
               gst: product.gst || existingProduct.gst || "18",
               brand: product.brand || existingProduct.brand || "",
               warranty:
@@ -526,6 +525,7 @@ const editEntry = async (req, res) => {
         error: "Order not found",
       });
     }
+
     // Send confirmation email if sostatus is updated to "Approved"
     if (
       updateFields.sostatus === "Approved" &&
@@ -533,38 +533,111 @@ const editEntry = async (req, res) => {
       existingOrder.sostatus !== "Approved"
     ) {
       try {
-        const subject = `Order Confirmation - Order #${
+        const subject = `Your Order #${
           updatedOrder.orderId || updatedOrder._id
-        }`;
+        } is Approved!`;
         const text = `
 Dear ${updatedOrder.customername || "Customer"},
 
-Thank you for placing your order with us. Below are your order details:
+We're thrilled to confirm that your order for the following products has been approved! Get ready for an amazing experience with Promark Tech Solutions:
 
-Order ID: ${updatedOrder.orderId || updatedOrder._id}
-Order Type: ${updatedOrder.orderType || "N/A"}
-Total: ₹${updatedOrder.total || 0}
-Date: ${
-          updatedOrder.soDate
-            ? new Date(updatedOrder.soDate).toLocaleString("en-IN")
-            : "N/A"
-        }
-Dispatch From: ${updatedOrder.dispatchFrom || "N/A"}
-
-Products:
 ${updatedOrder.products
   .map(
     (p, i) =>
       `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
         p.unitPrice
-      }, GST: ${p.gst}, Brand: ${p.brand}`
+      }, Brand: ${p.brand}`
   )
   .join("\n")}
 
-Thank you for your business.
-– Promark Tech Solutions
-    `;
-        await sendMail(updatedOrder.customerEmail, subject, text);
+Total: ₹${updatedOrder.total || 0}
+
+Let's make it happen! Reach out to us to explore the next steps.
+
+Cheers,
+The Promark Tech Solutions Crew
+        `;
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { font-family: 'Poppins', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+              .container { max-width: 700px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+              .hero { background: linear-gradient(135deg, #007bff, #00d4ff); padding: 50px 20px; text-align: center; position: relative; }
+              .hero h1 { color: #ffffff; font-size: 36px; font-weight: 700; margin: 0; text-shadow: 0 3px 6px rgba(0,0,0,0.3); letter-spacing: 1px; }
+              .hero p { color: #ffffff; font-size: 18px; opacity: 0.9; margin: 15px 0; }
+              .content { padding: 40px; background-color: #ffffff; }
+              .content h2 { color: #1a1a1a; font-size: 26px; font-weight: 600; margin-bottom: 20px; }
+              .content p { color: #444444; font-size: 16px; line-height: 1.8; margin: 0 0 25px; }
+              .highlight { background: linear-gradient(135deg, #e6f3ff, #d9e9ff); padding: 20px; border-radius: 15px; text-align: center; font-size: 18px; font-weight: 500; color: #333; }
+              .products { background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 25px; border-radius: 15px; border: 1px solid #dee2e6; }
+              .products ul { list-style: none; padding: 0; margin: 0; }
+              .products li { font-size: 16px; color: #333333; margin-bottom: 15px; display: flex; align-items: center; transition: transform 0.3s; }
+              .products li:hover { transform: translateX(10px); }
+              .products li::before { content: '★'; color: #ffc107; margin-right: 12px; font-size: 18px; }
+              .cta-button { display: inline-block; padding: 18px 36px; background: linear-gradient(135deg, #28a745, #34c759); color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; margin: 25px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease; }
+              .cta-button:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.4); background: linear-gradient(135deg, #34c759, #28a745); }
+              .footer { text-align: center; padding: 30px; background: linear-gradient(135deg, #f1f3f5, #e9ecef); color: #6c757d; font-size: 14px; }
+              .footer a { color: #007bff; text-decoration: none; font-weight: 600; }
+              .footer a:hover { text-decoration: underline; }
+              .social-icons { margin-top: 20px; }
+              .social-icons a { margin: 0 12px; display: inline-block; transition: transform 0.3s; }
+              .social-icons a:hover { transform: scale(1.2); }
+              .social-icons img { width: 28px; height: 28px; }
+              @media (max-width: 600px) {
+                .container { margin: 15px; }
+                .hero h1 { font-size: 28px; }
+                .hero p { font-size: 16px; }
+                .content { padding: 25px; }
+                .content h2 { font-size: 22px; }
+                .cta-button { padding: 14px 28px; font-size: 16px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="hero">
+                <h1>Order #${
+                  updatedOrder.orderId || updatedOrder._id
+                } Approved!</h1>
+                <p>Your Journey with Promark Tech Solutions Begins!</p>
+              </div>
+              <div class="content">
+                <h2>Dear ${updatedOrder.customername || "Customer"},</h2>
+                <p>We're absolutely thrilled to confirm that your order has been approved! You're one step closer to experiencing the awesomeness of your selected products with Promark Tech Solutions.</p>
+                <div class="products">
+                  <ul>
+                    ${updatedOrder.products
+                      .map(
+                        (p, i) =>
+                          `<li><strong>${p.productType}</strong> - Qty: ${p.qty}, Unit Price: ₹${p.unitPrice}, Brand: ${p.brand}</li>`
+                      )
+                      .join("")}
+                  </ul>
+                </div>
+                <div class="highlight">
+                  <p>Total: ₹${updatedOrder.total || 0}</p>
+                </div>
+                <p>Let's make it happen! Reach out to us to dive into the next steps and unlock the full potential of your order.</p>
+                <a href="mailto:support@promarktechsolutions.com" class="cta-button">Contact Us Now</a>
+              </div>
+              <div class="footer">
+                <p>Cheers,<br/>The Promark Tech Solutions Crew</p>
+                <p>&copy; 2025 <a href="https://promarktechsolutions.com">Promark Tech Solutions</a>. All rights reserved.</p>
+                <div class="social-icons">
+                  <a href="https://twitter.com/promarktech"><img src="https://img.icons8.com/color/28/000000/twitter.png" alt="Twitter"></a>
+                  <a href="https://linkedin.com/company/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/linkedin.png" alt="LinkedIn"></a>
+                  <a href="https://instagram.com/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/instagram.png" alt="Instagram"></a>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+        await sendMail(updatedOrder.customerEmail, subject, text, html);
       } catch (mailErr) {
         console.error(
           "Order confirmation email sending failed:",
@@ -584,18 +657,26 @@ Thank you for your business.
           updateFields.dispatchStatus === "Dispatched"
             ? "dispatched"
             : "delivered";
-        const subject = `Order ${
+        const subject = `Your Order #${
+          updatedOrder.orderId || updatedOrder._id
+        } Has Been ${
           statusText.charAt(0).toUpperCase() + statusText.slice(1)
-        } Confirmation - Order #${updatedOrder.orderId || updatedOrder._id}`;
+        }!`;
         const text = `
 Dear ${updatedOrder.customername || "Customer"},
 
-We are pleased to inform you that your order has been ${statusText}. Below are the order details:
+Great news! Your order has been ${statusText}. Here are the details of your order:
 
-Order ID: ${updatedOrder.orderId || updatedOrder._id}
-Order Type: ${updatedOrder.orderType || "N/A"}
+${updatedOrder.products
+  .map(
+    (p, i) =>
+      `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
+        p.unitPrice
+      }, Brand: ${p.brand}, Size: ${p.size}, Spec: ${p.spec}`
+  )
+  .join("\n")}
+
 Total: ₹${updatedOrder.total || 0}
-Dispatch From: ${updatedOrder.dispatchFrom || "N/A"}
 ${
   updateFields.dispatchStatus === "Dispatched"
     ? `Dispatch Date: ${
@@ -610,27 +691,113 @@ ${
       }`
 }
 Transporter: ${updatedOrder.transporter || "N/A"}
-Transporter Details: ${updatedOrder.transporterDetails || "N/A"}
 Docket No: ${updatedOrder.docketNo || "N/A"}
 
-Products:
-${updatedOrder.products
-  .map(
-    (p, i) =>
-      `${i + 1}. ${p.productType} - Qty: ${p.qty}, Unit Price: ₹${
-        p.unitPrice
-      }, GST: ${p.gst}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${
-        p.spec
-      }, Model: ${p.modelName}, Model Size: ${p.modelSize}, Specifications: ${
-        p.specifications
-      }, Amount: ₹${p.amount}`
-  )
-  .join("\n")}
+We're here to support you every step of the way!
 
-Thank you for your business.
-– Promark Tech Solutions
+Cheers,
+The Promark Tech Solutions Crew
         `;
-        await sendMail(updatedOrder.customerEmail, subject, text);
+        const html = `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <style>
+              body { font-family: 'Poppins', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; }
+              .container { max-width: 700px; margin: 30px auto; background-color: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 8px 16px rgba(0,0,0,0.2); }
+              .hero { background: linear-gradient(135deg, #ff4b2b, #ff8e53); padding: 50px 20px; text-align: center; position: relative; }
+              .hero h1 { color: #ffffff; font-size: 36px; font-weight: 700; margin: 0; text-shadow: 0 3px 6px rgba(0,0,0,0.3); letter-spacing: 1px; }
+              .hero p { color: #ffffff; font-size: 18px; opacity: 0.9; margin: 15px 0; }
+              .content { padding: 40px; background-color: #ffffff; }
+              .content h2 { color: #1a1a1a; font-size: 26px; font-weight: 600; margin-bottom: 20px; }
+              .content p { color: #444444; font-size: 16px; line-height: 1.8; margin: 0 0 25px; }
+              .highlight { background: linear-gradient(135deg, #ffe8e0, #fff3e0); padding: 20px; border-radius: 15px; text-align: center; font-size: 18px; font-weight: 500; color: #333; }
+              .products { background: linear-gradient(135deg, #f8f9fa, #e9ecef); padding: 25px; border-radius: 15px; border: 1px solid #dee2e6; }
+              .products ul { list-style: none; padding: 0; margin: 0; }
+              .products li { font-size: 16px; color: #333333; margin-bottom: 15px; display: flex; align-items: center; transition: transform 0.3s; }
+              .products li:hover { transform: translateX(10px); }
+              .products li::before { content: '★'; color: #ffc107; margin-right: 12px; font-size: 18px; }
+              .cta-button { display: inline-block; padding: 18px 36px; background: linear-gradient(135deg, #28a745, #34c759); color: #ffffff; text-decoration: none; border-radius: 50px; font-size: 18px; font-weight: 600; margin: 25px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: all 0.3s ease; }
+              .cta-button:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.4); background: linear-gradient(135deg, #34c759, #28a745); }
+              .footer { text-align: center; padding: 30px; background: linear-gradient(135deg, #f1f3f5, #e9ecef); color: #6c757d; font-size: 14px; }
+              .footer a { color: #ff4b2b; text-decoration: none; font-weight: 600; }
+              .footer a:hover { text-decoration: underline; }
+              .social-icons { margin-top: 20px; }
+              .social-icons a { margin: 0 12px; display: inline-block; transition: transform 0.3s; }
+              .social-icons a:hover { transform: scale(1.2); }
+              .social-icons img { width: 28px; height: 28px; }
+              @media (max-width: 600px) {
+                .container { margin: 15px; }
+                .hero h1 { font-size: 28px; }
+                .hero p { font-size: 16px; }
+                .content { padding: 25px; }
+                .content h2 { font-size: 22px; }
+                .cta-button { padding: 14px 28px; font-size: 16px; }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="hero">
+                <h1>Order #${updatedOrder.orderId || updatedOrder._id} ${
+          statusText.charAt(0).toUpperCase() + statusText.slice(1)
+        }!</h1>
+                <p>Exciting Update from Promark Tech Solutions!</p>
+              </div>
+              <div class="content">
+                <h2>Dear ${updatedOrder.customername || "Customer"},</h2>
+                <p>Awesome news! Your order has been ${statusText}, bringing you closer to enjoying your products from Promark Tech Solutions. Here's what's in your order:</p>
+                <div class="products">
+                  <ul>
+                    ${updatedOrder.products
+                      .map(
+                        (p, i) =>
+                          `<li><strong>${p.productType}</strong> - Qty: ${p.qty}, Unit Price: ₹${p.unitPrice}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${p.spec}</li>`
+                      )
+                      .join("")}
+                  </ul>
+                </div>
+                <div class="highlight">
+                  <p>Total: ₹${updatedOrder.total || 0}</p>
+                  <p>${
+                    updateFields.dispatchStatus === "Dispatched"
+                      ? `Dispatch Date: ${
+                          updatedOrder.dispatchDate
+                            ? new Date(
+                                updatedOrder.dispatchDate
+                              ).toLocaleString("en-IN")
+                            : "N/A"
+                        }`
+                      : `Delivery Date: ${
+                          updatedOrder.receiptDate
+                            ? new Date(updatedOrder.receiptDate).toLocaleString(
+                                "en-IN"
+                              )
+                            : "N/A"
+                        }`
+                  }</p>
+                  <p>Transporter: ${updatedOrder.transporter || "N/A"}</p>
+                  <p>Docket No: ${updatedOrder.docketNo || "N/A"}</p>
+                </div>
+                <p>We're here to make your experience unforgettable! Reach out if you have any questions or need further assistance.</p>
+                <a href="mailto:support@promarktechsolutions.com" class="cta-button">Get in Touch</a>
+              </div>
+              <div class="footer">
+                <p>Cheers,<br/>The Promark Tech Solutions Crew</p>
+                <p>&copy; 2025 <a href="https://promarktechsolutions.com">Promark Tech Solutions</a>. All rights reserved.</p>
+                <div class="social-icons">
+                  <a href="https://twitter.com/promarktech"><img src="https://img.icons8.com/color/28/000000/twitter.png" alt="Twitter"></a>
+                  <a href="https://linkedin.com/company/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/linkedin.png" alt="LinkedIn"></a>
+                  <a href="https://instagram.com/promarktechsolutions"><img src="https://img.icons8.com/color/28/000000/instagram.png" alt="Instagram"></a>
+                </div>
+              </div>
+            </div>
+          </body>
+          </html>
+        `;
+        await sendMail(updatedOrder.customerEmail, subject, text, html);
       } catch (mailErr) {
         console.error(
           `${updateFields.dispatchStatus} email sending failed:`,
