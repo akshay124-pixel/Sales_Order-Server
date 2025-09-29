@@ -18,10 +18,9 @@ Controller.initSocket(server);
 
 // CORS configuration
 const corsOptions = {
-  origin: process.env.API_URL,
+  origin: process.env.APP_URL,
   methods: "GET,HEAD,PUT,PATCH,POST,DELETE",
   credentials: true,
-  optionsSuccessStatus: 200,
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 // Serve uploaded files statically (optional, for accessing uploaded files)

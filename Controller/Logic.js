@@ -9,11 +9,11 @@ let io;
 const initSocket = (server) => {
   io = new Server(server, {
     cors: {
-      origin: process.env.API_URL,
-      methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
+      origin: process.env.APP_URL,
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
+      credentials: true,
     },
   });
-
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
     socket.on("disconnect", () => {
@@ -558,7 +558,7 @@ Cheers,
 The Promark Tech Solutions Crew
         `;
         const html = `
-          <!DOCTYPE html>
+         <!DOCTYPE html>
           <html>
           <head>
             <meta charset="UTF-8">
@@ -575,7 +575,7 @@ The Promark Tech Solutions Crew
               .content h2 { color: #1f2937; font-size: 28px; font-weight: 600; margin-bottom: 20px; }
               .content p { color: #4b5563; font-size: 16px; line-height: 1.9; margin: 0 0 25px; }
               .highlight { background: linear-gradient(135deg, #e0f2fe, #bfdbfe); padding: 25px; border-radius: 16px; text-align: center; font-size: 18px; font-weight: 500; color: #1f2937; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-              .products { background: linear-gradient(135deg, #f9fafb, #e5e7eb); padding: 30px; border-radius: 16px; border: 1px solid #d1d5db; }
+              .products {  padding: 30px;}
               .products ul { list-style: none; padding: 0; margin: 0; }
               .products li { font-size: 16px; color: #1f2937; margin-bottom: 16px; display: flex; align-items: center; transition: transform 0.3s ease; }
               .products li:hover { transform: translateX(12px); }
@@ -611,7 +611,7 @@ The Promark Tech Solutions Crew
                 box-shadow: 0 8px 16px rgba(0,0,0,0.3); 
                 background: linear-gradient(135deg, #16a34a, #22c55e); 
               }
-              .footer { text-align: center; padding: 40px; background: linear-gradient(135deg, #f3f4f6, #e5e7eb); color: #6b7280; font-size: 14px; }
+              .footer { text-align: center; padding: 40px; background:linear-gradient(135deg, #1e3a8a, #3b82f6); color: #6b7280; font-size: 14px; }
               .footer a { color: #1e3a8a; text-decoration: none; font-weight: 600; }
               .footer a:hover { text-decoration: underline; }
               .social-icons { margin-top: 20px; }
@@ -641,23 +641,26 @@ The Promark Tech Solutions Crew
               <div class="content">
                 <h2>Dear ${updatedOrder.customername || "Customer"},</h2>
                 <p>We're over the moon to announce that your order has been officially approved! You're about to experience the magic of your selected products with Promark Tech Solutions.</p>
-                <div class="products">
-                  <ul>
-                    ${updatedOrder.products
-                      .map(
-                        (p, i) =>
-                          `<li><strong>${p.productType}</strong> - Qty: ${p.qty}, Unit Price: ₹${p.unitPrice}, Brand: ${p.brand}</li>`
-                      )
-                      .join("")}
-                  </ul>
-                </div>
-                <div class="highlight">
-                  <p>Total: ₹${updatedOrder.total || 0}</p>
-                </div>
+               <div class="products" style="margin-top:10px;">
+  <ul style="list-style-type:none; padding:0; margin:0;">
+    ${updatedOrder.products
+      .map(
+        (p, i) =>
+          `<li style="margin-bottom:8px; padding:6px 10px;">
+            <strong style="color:#333;">${p.productType}</strong> 
+            <span style="margin-left:10px; color:#555;">Qty: ${p.qty}</span>, 
+           
+          </li>`
+      )
+      .join("")}
+  </ul>
+</div>
+
+                
                 <p>Ready to dive into the next steps? Our team is here to make your experience seamless and extraordinary. Let's make it happen!</p>
                 <a href="mailto:support@promarktechsolutions.com" class="cta-button">Contact Us Now</a>
               </div>
-              <div class="footer">
+              <div class="footer" style="color: #e0f2fe;">
                 <p>With enthusiasm,<br/>The Promark Tech Solutions Crew</p>
                 <p>&copy; 2025 <a href="https://promarktechsolutions.com">Promark Tech Solutions</a>. All rights reserved.</p>
                 <div class="social-icons">
@@ -732,7 +735,7 @@ Cheers,
 The Promark Tech Solutions Crew
         `;
         const html = `
-          <!DOCTYPE html>
+         <!DOCTYPE html>
           <html>
           <head>
             <meta charset="UTF-8">
@@ -741,15 +744,16 @@ The Promark Tech Solutions Crew
               @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
               body { font-family: 'Poppins', Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; line-height: 1.6; }
               .container { max-width: 720px; margin: 40px auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
-              .hero { background: linear-gradient(135deg, #dc2626, #f87171); padding: 60px 20px; text-align: center; position: relative; }
+              .hero { background: linear-gradient(135deg, #16a34a, #4ade80, #22c55e);
+; padding: 60px 20px; text-align: center; position: relative; }
               .hero::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: url('https://www.transparenttextures.com/patterns/subtle-white-feathers.png'); opacity: 0.1; }
               .hero h1 { color: #ffffff; font-size: 38px; font-weight: 700; margin: 0; text-shadow: 0 3px 6px rgba(0,0,0,0.3); letter-spacing: 1.2px; }
               .hero p { color: #ffffff; font-size: 20px; opacity: 0.95; margin: 15px 0; font-weight: 400; }
               .content { padding: 50px 30px; background-color: #ffffff; }
               .content h2 { color: #1f2937; font-size: 28px; font-weight: 600; margin-bottom: 20px; }
               .content p { color: #4b5563; font-size: 16px; line-height: 1.9; margin: 0 0 25px; }
-              .highlight { background: linear-gradient(135deg, #fee2e2, #fef3c7); padding: 25px; border-radius: 16px; text-align: center; font-size: 18px; font-weight: 500; color: #1f2937; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
-              .products { background: linear-gradient(135deg, #f9fafb, #e5e7eb); padding: 30px; border-radius: 16px; border: 1px solid #d1d5db; }
+              .highlight {  padding: 25px;  text-align: center; font-size: 18px; font-weight: 500; color: #1f2937;  }
+              .products {  padding: 30px;  }
               .products ul { list-style: none; padding: 0; margin: 0; }
               .products li { font-size: 16px; color: #1f2937; margin-bottom: 16px; display: flex; align-items: center; transition: transform 0.3s ease; }
               .products li:hover { transform: translateX(12px); }
@@ -785,8 +789,8 @@ The Promark Tech Solutions Crew
                 box-shadow: 0 8px 16px rgba(0,0,0,0.3); 
                 background: linear-gradient(135deg, #16a34a, #22c55e); 
               }
-              .footer { text-align: center; padding: 40px; background: linear-gradient(135deg, #f3f4f6, #e5e7eb); color: #6b7280; font-size: 14px; }
-              .footer a { color: #dc2626; text-decoration: none; font-weight: 600; }
+              .footer { text-align: center; padding: 40px; background: linear-gradient(135deg, #16a34a, #4ade80, #22c55e); color: #6b7280; font-size: 14px; }
+              .footer a { color: #0858cf; text-decoration: none; font-weight: 600; }
               .footer a:hover { text-decoration: underline; }
               .social-icons { margin-top: 20px; }
               .social-icons a { margin: 0 15px; display: inline-block; transition: transform 0.3s ease; }
@@ -815,18 +819,23 @@ The Promark Tech Solutions Crew
               <div class="content">
                 <h2>Dear ${updatedOrder.customername || "Customer"},</h2>
                 <p>Fantastic news! Your order has been ${statusText}, bringing you one step closer to enjoying the excellence of Promark Tech Solutions. Here's what's in your order:</p>
-                <div class="products">
-                  <ul>
-                    ${updatedOrder.products
-                      .map(
-                        (p, i) =>
-                          `<li><strong>${p.productType}</strong> - Qty: ${p.qty}, Unit Price: ₹${p.unitPrice}, Brand: ${p.brand}, Size: ${p.size}, Spec: ${p.spec}</li>`
-                      )
-                      .join("")}
-                  </ul>
-                </div>
+                <div class="products" style="margin-top:10px;">
+  <ul style="list-style-type:none; padding:0; margin:0;">
+    ${updatedOrder.products
+      .map(
+        (p, i) =>
+          `<li style="margin-bottom:10px; padding:8px 12px;">
+            <strong style="color:#333;">${p.productType}</strong> 
+            <span style="margin-left:12px; color:#555;">Qty: ${p.qty}</span>, 
+           
+          </li>`
+      )
+      .join("")}
+  </ul>
+</div>
+
                 <div class="highlight">
-                  <p>Total: ₹${updatedOrder.total || 0}</p>
+                 
                   <p>${
                     updateFields.dispatchStatus === "Dispatched"
                       ? `Dispatch Date: ${
@@ -850,7 +859,7 @@ The Promark Tech Solutions Crew
                 <p>We're here to ensure your experience is nothing short of spectacular! Reach out with any questions or to explore what's next.</p>
                 <a href="mailto:support@promarktechsolutions.com" class="cta-button">Get in Touch</a>
               </div>
-              <div class="footer">
+              <div class="footer" style="color: white;">
                 <p>With enthusiasm,<br/>The Promark Tech Solutions Crew</p>
                 <p>&copy; 2025 <a href="https://promarktechsolutions.com">Promark Tech Solutions</a>. All rights reserved.</p>
                 <div class="social-icons">
